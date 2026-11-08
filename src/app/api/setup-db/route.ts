@@ -5,16 +5,32 @@ export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 export const maxDuration = 300;
 
-function authorized(req: NextRequest): boolean {
-  const secret = process.env.AUTH_SECRET || process.env.SETUP_SECRET || "";
+function cleanSecret(value: string | undefined): string {
+  return (value || "").trim().replace(/^['"]|['"]$/g, "");
+}
+
+async function needsBootstrap(): Promise<boolean> {
+  try {
+    const users = await db.user.count();
+    return users === 0;
+  } catch {
+    // Table missing / DB error → allow first-time setup
+    return true;
+  }
+}
+
+function authorized(req: NextRequest, allowOpenBootstrap: boolean): boolean {
+  if (allowOpenBootstrap) return true;
+
+  const secret = cleanSecret(process.env.AUTH_SECRET || process.env.SETUP_SECRET);
   if (!secret) return false;
-  const header = req.headers.get("x-setup-key") || "";
-  const query = req.nextUrl.searchParams.get("key") || "";
+
+  const header = cleanSecret(req.headers.get("x-setup-key") || "");
+  const query = cleanSecret(req.nextUrl.searchParams.get("key") || "");
   return header === secret || query === secret;
 }
 
 async function runBootstrap() {
-  // Dynamic imports keep Node built-ins out of Edge/webpack client graphs.
   const { spawnSync } = await import("node:child_process");
   const path = await import("node:path");
 
@@ -36,18 +52,25 @@ async function runBootstrap() {
 }
 
 export async function GET(req: NextRequest) {
-  if (!authorized(req)) {
+  const openBootstrap = await needsBootstrap();
+
+  if (!authorized(req, openBootstrap)) {
     return NextResponse.json(
       {
         ok: false,
         error:
-          "Unauthorized. Call /api/setup-db?key=YOUR_AUTH_SECRET (same value as Hostinger AUTH_SECRET).",
+          "Unauthorized. DB already has users — pass ?key= equal to Hostinger AUTH_SECRET (URL-encode special characters).",
+        authSecretSet: Boolean(cleanSecret(process.env.AUTH_SECRET)),
+        tip: "Example: /api/setup-db?key=" + encodeURIComponent("your-auth-secret-here"),
       },
       { status: 401 },
     );
   }
 
-  const before = { users: null as number | null };
+  const before = {
+    openBootstrap,
+    users: null as number | null,
+  };
   try {
     before.users = await db.user.count();
   } catch {
