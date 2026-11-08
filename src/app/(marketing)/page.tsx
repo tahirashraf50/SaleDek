@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import {
   BarChart3,
   CheckCircle2,
@@ -10,6 +11,7 @@ import {
   Users,
   Workflow,
 } from "lucide-react";
+import { auth } from "@/lib/auth";
 import { getWebsiteSettings } from "@/lib/platform-website";
 import { HeroShowcase } from "@/components/marketing/hero-showcase";
 import { ReportsShowcase } from "@/components/marketing/reports-showcase";
@@ -84,6 +86,17 @@ const TESTIMONIALS = [
 ];
 
 export default async function SiteHomePage() {
+  try {
+    const session = await auth();
+    if (session?.user) {
+      if (session.user.role === "SUPER_ADMIN") redirect("/admin");
+      if (session.user.organizationStatus === "SUSPENDED") redirect("/suspended");
+      redirect("/inbox");
+    }
+  } catch (err) {
+    console.error("[home] auth check failed, showing marketing:", err);
+  }
+
   const site = await getWebsiteSettings();
   const phoneTel = site.contactPhone.replace(/[^\d+]/g, "") || site.contactPhone;
 
@@ -108,7 +121,7 @@ export default async function SiteHomePage() {
                 {site.heroCtaLabel || "Get Demo"}
               </Link>
               <Link
-                href={site.heroSecondaryHref || "/site/pricing"}
+                href={site.heroSecondaryHref || "/pricing"}
                 className="site-btn-lime"
               >
                 {site.heroSecondaryLabel || "View Demo"}
@@ -341,7 +354,7 @@ export default async function SiteHomePage() {
               Request a Demo
             </Link>
             <Link
-              href="/site/contact"
+              href="/contact"
               className="inline-flex items-center justify-center rounded-full border border-white/25 px-6 py-3 text-sm font-semibold text-white hover:bg-white/10"
             >
               Contact sales

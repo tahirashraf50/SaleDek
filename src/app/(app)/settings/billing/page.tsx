@@ -120,7 +120,7 @@ export default async function BillingSettingsPage() {
             you need a plan change or payment confirmation.
           </p>
           <Link
-            href="/site/contact"
+            href="/contact"
             className="mt-4 inline-flex h-9 items-center rounded-xl bg-[#ac16e0] px-3 text-xs font-semibold text-white hover:bg-[#8b10b8]"
           >
             Contact support

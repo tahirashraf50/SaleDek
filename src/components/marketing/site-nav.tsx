@@ -6,11 +6,11 @@ import { useEffect, useState } from "react";
 import { Menu, X } from "lucide-react";
 
 const links = [
-  { href: "/site", label: "Home", exact: true },
-  { href: "/site/about", label: "About Us" },
-  { href: "/site/features", label: "Features" },
-  { href: "/site/pricing", label: "Pricing" },
-  { href: "/site/contact", label: "Contact" },
+  { href: "/", label: "Home", exact: true },
+  { href: "/about", label: "About Us" },
+  { href: "/features", label: "Features" },
+  { href: "/pricing", label: "Pricing" },
+  { href: "/contact", label: "Contact" },
 ];
 
 export function SiteNav({
@@ -45,7 +45,7 @@ export function SiteNav({
     >
       <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4 md:px-6">
         <Link
-          href="/site"
+          href="/"
           className="inline-flex items-center gap-2.5 text-lg font-semibold tracking-tight text-[var(--site-ink)]"
         >
           {logoUrl ? (

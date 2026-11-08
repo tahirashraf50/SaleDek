@@ -13,7 +13,11 @@ export async function middleware(req: NextRequest) {
   const isPublic =
     isAuth ||
     path === "/" ||
-    path.startsWith("/site") ||
+    path === "/about" ||
+    path === "/features" ||
+    path === "/pricing" ||
+    path === "/contact" ||
+    path.startsWith("/site") || // static marketing assets + legacy redirects
     path.startsWith("/shop") ||
     path.startsWith("/portal") ||
     path.startsWith("/suspended") ||

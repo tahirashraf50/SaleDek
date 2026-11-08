@@ -67,7 +67,7 @@ export default async function PortalPage({ params }: Props) {
           <span>
             Powered by{" "}
             <Link
-              href="/site"
+              href="/"
               className="font-semibold text-[#8b10b8] hover:underline"
             >
               {PLATFORM_NAME}

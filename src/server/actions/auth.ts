@@ -118,6 +118,6 @@ export async function loginAction(formData: FormData) {
 
 export async function logoutAction() {
   const { signOut } = await import("@/lib/auth");
-  await signOut({ redirectTo: "/site" });
-  redirect("/site");
+  await signOut({ redirectTo: "/" });
+  redirect("/");
 }

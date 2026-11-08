@@ -1,5 +1,5 @@
 import { Sora } from "next/font/google";
-import "@/app/(marketing)/site/site.css";
+import "@/app/(marketing)/site.css";
 
 const sans = Sora({
   subsets: ["latin"],

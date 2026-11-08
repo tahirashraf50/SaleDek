@@ -90,7 +90,7 @@ export default async function AdminPlansPage() {
             </p>
           </div>
           <Link
-            href="/site/pricing"
+            href="/pricing"
             className="inline-flex h-9 items-center gap-1.5 rounded-xl border border-white/15 bg-white/10 px-3 text-xs font-semibold text-white hover:bg-white/15"
           >
             View public pricing

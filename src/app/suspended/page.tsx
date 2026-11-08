@@ -15,7 +15,7 @@ export default function SuspendedPage() {
             This tenant is suspended by the platform administrator. Contact support or your
             PulseCRM account manager.
           </p>
-          <Link href="/site" className="text-teal-700 hover:underline">
+          <Link href="/" className="text-teal-700 hover:underline">
             Back to PulseCRM website
           </Link>
         </CardContent>

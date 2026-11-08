@@ -36,7 +36,7 @@ export default async function AdminLayout({
               {session.user.name}
             </div>
             <Link
-              href="/site"
+              href="/"
               prefetch={false}
               className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-2.5 text-[11px] font-semibold text-slate-700 hover:bg-slate-50"
             >

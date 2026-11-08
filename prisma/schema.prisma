@@ -1101,7 +1101,7 @@ model PlatformWebsiteSettings {
   heroCtaLabel        String   @default("Start free trial")
   heroCtaHref         String   @default("/register?plan=DEMO")
   heroSecondaryLabel  String   @default("View packages")
-  heroSecondaryHref   String   @default("/site/pricing")
+  heroSecondaryHref   String   @default("/pricing")
   /// [{ "value": "15d", "label": "Free demo" }, ...]
   heroStats           Json     @default("[{\"value\":\"15d\",\"label\":\"Free demo\"},{\"value\":\"6+\",\"label\":\"Core modules\"},{\"value\":\"24/7\",\"label\":\"Inbox ready\"}]")
   /// News ticker / marquee items

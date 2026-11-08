@@ -21,11 +21,11 @@ export default async function AdminWebsiteSettingsPage() {
           </h1>
           <p className="mt-1 text-sm text-slate-500">
             Logo, hero, sections, contact & footer for{" "}
-            <span className="font-medium text-slate-700">/site</span>
+            <span className="font-medium text-slate-700">saledek.com</span>
           </p>
         </div>
         <Link
-          href="/site"
+          href="/"
           target="_blank"
           className="inline-flex h-9 items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 text-xs font-semibold text-slate-700 hover:bg-slate-50"
         >

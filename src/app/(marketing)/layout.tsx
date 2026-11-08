@@ -48,13 +48,13 @@ export default async function SiteLayout({
             <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--site-lime)]">
               Product
             </p>
-            <Link href="/site/about" className="block text-white/70 hover:text-white">
+            <Link href="/about" className="block text-white/70 hover:text-white">
               About Us
             </Link>
-            <Link href="/site/features" className="block text-white/70 hover:text-white">
+            <Link href="/features" className="block text-white/70 hover:text-white">
               Features
             </Link>
-            <Link href="/site/pricing" className="block text-white/70 hover:text-white">
+            <Link href="/pricing" className="block text-white/70 hover:text-white">
               Pricing
             </Link>
             <Link href="/register?plan=DEMO" className="block text-white/70 hover:text-white">
@@ -65,7 +65,7 @@ export default async function SiteLayout({
             <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--site-lime)]">
               Contact
             </p>
-            <Link href="/site/contact" className="block text-white/70 hover:text-white">
+            <Link href="/contact" className="block text-white/70 hover:text-white">
               Contact Us
             </Link>
             <a

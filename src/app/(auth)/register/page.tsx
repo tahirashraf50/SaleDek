@@ -37,7 +37,7 @@ export default async function RegisterPage({ searchParams }: Props) {
   return (
     <div className="site-hero-glow relative flex min-h-screen flex-col">
       <header className="relative z-10 mx-auto flex w-full max-w-6xl items-center justify-between px-4 py-5 md:px-6">
-        <Link href="/site" className="inline-flex items-center gap-2.5">
+        <Link href="/" className="inline-flex items-center gap-2.5">
           {site.logoUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
@@ -55,7 +55,7 @@ export default async function RegisterPage({ searchParams }: Props) {
           </span>
         </Link>
         <Link
-          href="/site"
+          href="/"
           className="inline-flex items-center gap-1.5 text-sm font-medium text-[var(--site-muted)] transition hover:text-[var(--site-purple)]"
         >
           <ArrowLeft className="h-4 w-4" />
@@ -132,7 +132,7 @@ export default async function RegisterPage({ searchParams }: Props) {
 
             <p className="mt-6 text-center text-sm text-[var(--site-muted)]">
               <Link
-                href="/site/pricing"
+                href="/pricing"
                 className="font-semibold text-[var(--site-purple)] hover:underline"
               >
                 Compare packages

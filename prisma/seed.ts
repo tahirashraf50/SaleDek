@@ -657,7 +657,7 @@ async function main() {
   console.log("Super admin: super@pulsecrm.com / demo1234 → /admin");
   console.log("Tenant admin: admin@demo.com / demo1234 → /inbox");
   console.log("Underwriting: underwriting@demo.com / demo1234 → /underwriting");
-  console.log("Marketing: /site  |  Shop: /shop/demo-telecom  |  Portal: /portal/demo-telecom");
+  console.log("Marketing: /  |  Shop: /shop/demo-telecom  |  Portal: /portal/demo-telecom");
 }
 
 main()

@@ -30,7 +30,7 @@ export default async function ShopPage({ params }: Props) {
             <Link href={`/portal/${org.slug}`} className="text-teal-700 hover:underline">
               Support portal
             </Link>
-            <Link href="/site" className="text-slate-500 hover:underline">
+            <Link href="/" className="text-slate-500 hover:underline">
               PulseCRM
             </Link>
           </div>

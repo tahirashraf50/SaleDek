@@ -24,7 +24,7 @@ npm run db:seed
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) → redirects to marketing `/site`
+Open [http://localhost:3000](http://localhost:3000) → marketing site
 
 ### Demo login
 
@@ -34,7 +34,7 @@ Open [http://localhost:3000](http://localhost:3000) → redirects to marketing `
 
 ### Public sites
 
-- Marketing + SaaS packages: `/site` · `/site/pricing`
+- Marketing + SaaS packages: `/` · `/pricing`
 - Tenant product shop: `/shop/demo-telecom`
 - Tenant complaint portal: `/portal/demo-telecom`
 

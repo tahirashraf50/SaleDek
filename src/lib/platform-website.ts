@@ -101,7 +101,7 @@ const FALLBACK: WebsiteSettings = {
   heroCtaLabel: "Get Demo",
   heroCtaHref: "/register?plan=DEMO",
   heroSecondaryLabel: "View Demo",
-  heroSecondaryHref: "/site/pricing",
+  heroSecondaryHref: "/pricing",
   heroStats: DEFAULT_STATS,
   newsTickerItems: DEFAULT_TICKER,
   featuresTitle: "Everything your team needs to grow",

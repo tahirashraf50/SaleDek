@@ -658,18 +658,18 @@ export async function updateSaaSPlan(
     },
   });
   revalidatePath("/admin/plans");
-  revalidatePath("/site/pricing");
+  revalidatePath("/pricing");
   revalidatePath("/admin");
 }
 
 function revalidateWebsite() {
   revalidatePath("/admin/website");
   revalidatePath("/admin");
-  revalidatePath("/site");
-  revalidatePath("/site/pricing");
-  revalidatePath("/site/features");
-  revalidatePath("/site/about");
-  revalidatePath("/site/contact");
+  revalidatePath("/");
+  revalidatePath("/pricing");
+  revalidatePath("/features");
+  revalidatePath("/about");
+  revalidatePath("/contact");
 }
 
 export async function updateWebsiteSettings(data: {
@@ -733,7 +733,7 @@ export async function updateWebsiteSettings(data: {
     heroCtaLabel: data.heroCtaLabel.trim(),
     heroCtaHref: data.heroCtaHref.trim() || "/register",
     heroSecondaryLabel: data.heroSecondaryLabel.trim(),
-    heroSecondaryHref: data.heroSecondaryHref.trim() || "/site/pricing",
+    heroSecondaryHref: data.heroSecondaryHref.trim() || "/pricing",
     heroStats,
     newsTickerItems,
     featuresTitle: data.featuresTitle.trim(),

@@ -85,7 +85,7 @@ export default async function LoginPage() {
       {/* Login — right */}
       <div className="site-hero-glow relative flex w-full flex-1 flex-col lg:w-[48%] xl:w-[44%]">
         <header className="relative z-10 flex items-center justify-between px-5 py-4 md:px-8">
-          <Link href="/site" className="inline-flex items-center gap-2.5">
+          <Link href="/" className="inline-flex items-center gap-2.5">
             {site.logoUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img
@@ -103,7 +103,7 @@ export default async function LoginPage() {
             </span>
           </Link>
           <Link
-            href="/site"
+            href="/"
             className="inline-flex items-center gap-1.5 text-sm font-medium text-[var(--site-muted)] transition hover:text-[var(--site-purple)]"
           >
             <ArrowLeft className="h-4 w-4" />

@@ -96,7 +96,7 @@ export default async function PricingPage() {
         <p className="mt-12 text-center text-sm text-[var(--site-muted)]">
           Need a custom enterprise setup?{" "}
           <Link
-            href="/site/contact"
+            href="/contact"
             className="font-medium text-[var(--site-purple)] underline-offset-2 hover:underline"
           >
             Contact us
