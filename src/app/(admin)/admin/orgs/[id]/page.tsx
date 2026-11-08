@@ -23,6 +23,7 @@ import {
 } from "@/server/actions/admin";
 import { OrgLogoForm } from "@/components/admin/org-logo-form";
 import { OrgBillingPanel } from "@/components/admin/org-billing-panel";
+import { DeleteTenantButton } from "@/components/admin/delete-tenant-button";
 import { Button } from "@/components/ui/button";
 import { Select } from "@/components/ui/select";
 
@@ -172,7 +173,7 @@ export default async function AdminOrgDetailPage({ params }: Props) {
             </div>
           </div>
         </div>
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <Link
             href={`/portal/${org.slug}`}
             className="inline-flex h-9 items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 text-xs font-semibold text-slate-700 hover:bg-slate-50"
@@ -187,6 +188,11 @@ export default async function AdminOrgDetailPage({ params }: Props) {
             Shop
             <ArrowUpRight className="h-3.5 w-3.5" />
           </Link>
+          <DeleteTenantButton
+            orgId={org.id}
+            orgName={org.name}
+            orgSlug={org.slug}
+          />
         </div>
       </div>
 

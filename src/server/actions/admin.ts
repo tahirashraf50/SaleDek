@@ -178,6 +178,52 @@ export async function setOrganizationStatus(orgId: string, status: TenantStatus)
   revalidatePath(`/admin/orgs/${orgId}`);
 }
 
+/** Permanently delete a tenant and cascaded data. Requires typing the org slug. */
+export async function deleteOrganization(orgId: string, confirmSlug: string) {
+  const session = await requireSuperAdmin();
+  const org = await db.organization.findUnique({
+    where: { id: orgId },
+    select: { id: true, name: true, slug: true },
+  });
+  if (!org) throw new Error("Organization not found");
+
+  const expected = org.slug.trim().toLowerCase();
+  if (confirmSlug.trim().toLowerCase() !== expected) {
+    throw new Error(`Type the slug "${org.slug}" to confirm deletion.`);
+  }
+
+  const users = await db.user.findMany({
+    where: { organizationId: orgId },
+    select: { id: true },
+  });
+  const userIds = users.map((u) => u.id);
+
+  await db.$transaction(async (tx) => {
+    // Clear audit rows that would block user cascade (no onDelete on AuditLog.userId)
+    if (userIds.length) {
+      await tx.auditLog.deleteMany({
+        where: { userId: { in: userIds } },
+      });
+    }
+    await tx.auditLog.deleteMany({ where: { organizationId: orgId } });
+    await tx.organization.delete({ where: { id: orgId } });
+  });
+
+  await writeAudit({
+    organizationId: null,
+    userId: session.user.id,
+    action: "admin.org.deleted",
+    entity: "Organization",
+    entityId: orgId,
+    meta: { name: org.name, slug: org.slug },
+  });
+
+  revalidatePath("/admin/orgs");
+  revalidatePath("/admin");
+  revalidatePath(`/admin/orgs/${orgId}`);
+}
+
+
 export async function setOrganizationPlan(orgId: string, planId: string) {
   const session = await requireSuperAdmin();
   const plan = await db.saaSPlan.findUnique({ where: { id: planId } });

@@ -6,6 +6,7 @@ import { requireSuperAdmin } from "@/lib/session";
 import { cn, formatCurrency, formatDate } from "@/lib/utils";
 import { setOrganizationStatus } from "@/server/actions/admin";
 import { CreateTenantDialog } from "@/components/admin/create-tenant-dialog";
+import { DeleteTenantButton } from "@/components/admin/delete-tenant-button";
 import { Button } from "@/components/ui/button";
 
 async function statusAction(formData: FormData) {
@@ -180,7 +181,7 @@ export default async function AdminOrgsPage() {
                             type="submit"
                             size="sm"
                             variant="outline"
-                            className="h-8 border-rose-200 bg-white px-2.5 text-xs text-rose-700 hover:bg-rose-50"
+                            className="h-8 border-amber-200 bg-white px-2.5 text-xs text-amber-800 hover:bg-amber-50"
                           >
                             Suspend
                           </Button>
@@ -198,6 +199,11 @@ export default async function AdminOrgsPage() {
                           </Button>
                         </form>
                       )}
+                      <DeleteTenantButton
+                        orgId={o.id}
+                        orgName={o.name}
+                        orgSlug={o.slug}
+                      />
                     </div>
                   </td>
                 </tr>
