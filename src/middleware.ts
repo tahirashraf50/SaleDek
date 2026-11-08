@@ -3,9 +3,17 @@ import type { NextRequest } from "next/server";
 import { getToken } from "next-auth/jwt";
 
 export async function middleware(req: NextRequest) {
+  // Auth.js v5 sets `__Secure-authjs.session-token` on HTTPS.
+  // If middleware assumes HTTP cookie names, login "works" then /inbox bounces back to /login.
+  const secureCookie =
+    req.nextUrl.protocol === "https:" ||
+    process.env.AUTH_URL?.startsWith("https://") === true ||
+    process.env.NEXTAUTH_URL?.startsWith("https://") === true;
+
   const token = await getToken({
     req,
     secret: process.env.AUTH_SECRET,
+    secureCookie,
   });
 
   const path = req.nextUrl.pathname;
