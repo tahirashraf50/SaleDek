@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 /**
- * Hostinger/shared hosting: ensure MySQL schema + demo seed before next start.
- * Never crashes the process — app can still serve marketing if DB is down.
+ * Hostinger/shared hosting: ensure MySQL schema + demo seed.
+ * Run via: node scripts/db-bootstrap.mjs  (npm start / /api/setup-db)
+ * Never crashes the parent Next process when spawned as a child.
  */
 import { spawnSync } from "node:child_process";
 import fs from "node:fs";
@@ -21,9 +22,18 @@ function log(...args) {
   }
 }
 
-function run(bin, args) {
-  log(`$ ${bin} ${args.join(" ")}`);
-  const result = spawnSync(bin, args, {
+function prismaArgs(args) {
+  const local = path.join(root, "node_modules", "prisma", "build", "index.js");
+  if (fs.existsSync(local)) {
+    return { cmd: process.execPath, args: [local, ...args] };
+  }
+  return { cmd: "npx", args: ["prisma", ...args] };
+}
+
+function runPrisma(args) {
+  const { cmd, args: full } = prismaArgs(args);
+  log(`$ ${cmd} ${full.join(" ")}`);
+  const result = spawnSync(cmd, full, {
     cwd: root,
     env: process.env,
     encoding: "utf8",
@@ -59,27 +69,32 @@ log("DATABASE_URL =", redacted);
 if (!url.startsWith("mysql://")) {
   const scheme = (url.match(/^([a-zA-Z0-9+.-]+):\/\//) || [])[1] || "(none)";
   log(
-    `ERROR: DATABASE_URL must start with mysql:// — current scheme="${scheme}". Delete old postgresql:// value on Hostinger and set MySQL URL.`,
+    `ERROR: DATABASE_URL must start with mysql:// — current scheme="${scheme}".`,
   );
-  process.exit(0);
+  process.exit(1);
 }
 
-const migrated = run("npx", ["prisma", "migrate", "deploy"]);
+const migrated = runPrisma(["migrate", "deploy"]);
 if (!migrated) {
   log("migrate deploy failed — falling back to prisma db push");
-  const pushed = run("npx", ["prisma", "db", "push", "--skip-generate"]);
+  const pushed = runPrisma([
+    "db",
+    "push",
+    "--skip-generate",
+    "--accept-data-loss",
+  ]);
   if (!pushed) {
-    log("ERROR: both migrate and db push failed. Check MySQL host/user/pass.");
-    process.exit(0);
+    log("ERROR: both migrate and db push failed.");
+    process.exit(1);
   }
 }
 
-const seeded = run("npx", ["prisma", "db", "seed"]);
+const seeded = runPrisma(["db", "seed"]);
 if (!seeded) {
-  log("WARN: seed failed (app will still start).");
-} else {
-  log("seed ok");
+  log("WARN: seed failed (tables may still be ready).");
+  process.exit(0);
 }
 
+log("seed ok");
 log("done");
 process.exit(0);
