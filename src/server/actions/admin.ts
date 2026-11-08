@@ -1,0 +1,791 @@
+"use server";
+
+import bcrypt from "bcryptjs";
+import { addDays, addYears, format } from "date-fns";
+import { revalidatePath } from "next/cache";
+import {
+  SaaSPlanKey,
+  TenantStatus,
+  SubscriptionStatus,
+  PlatformBillingEventType,
+} from "@prisma/client";
+import { db } from "@/lib/db";
+import { requireSession } from "@/lib/session";
+import { writeAudit } from "@/lib/audit";
+import { seedOrganizationDefaults } from "@/lib/org-defaults";
+import { storeOrganizationLogo } from "@/lib/org-logo-server";
+import {
+  PLATFORM_NAME,
+  sendPlatformEmail,
+} from "@/lib/platform-email";
+import { formatCurrency, slugify } from "@/lib/utils";
+
+async function requireSuperAdmin() {
+  const session = await requireSession();
+  if (session.user.role !== "SUPER_ADMIN") {
+    throw new Error("Forbidden");
+  }
+  return session;
+}
+
+export async function createTenant(input: {
+  orgName: string;
+  slug?: string;
+  adminName: string;
+  adminEmail: string;
+  adminPassword: string;
+  planKey?: SaaSPlanKey | string;
+  status?: TenantStatus | string;
+  logo?: File | null;
+}) {
+  const session = await requireSuperAdmin();
+
+  const orgName = input.orgName.trim();
+  const adminName = input.adminName.trim();
+  const adminEmail = input.adminEmail.trim().toLowerCase();
+  const adminPassword = input.adminPassword;
+  const status =
+    input.status === "ACTIVE" || input.status === "TRIAL"
+      ? input.status
+      : "ACTIVE";
+
+  if (!orgName || !adminName || !adminEmail || adminPassword.length < 6) {
+    throw new Error("Fill all fields (password min 6 characters).");
+  }
+
+  const existingUser = await db.user.findUnique({ where: { email: adminEmail } });
+  if (existingUser) throw new Error("Admin email already registered.");
+
+  let slug = slugify(input.slug?.trim() || orgName) || "org";
+  const slugTaken = await db.organization.findUnique({ where: { slug } });
+  if (slugTaken) slug = `${slug}-${Date.now().toString(36)}`;
+
+  const planKey = (String(input.planKey || "STARTER").toUpperCase() ||
+    "STARTER") as SaaSPlanKey;
+  const plan =
+    (await db.saaSPlan.findUnique({ where: { key: planKey } })) ||
+    (await db.saaSPlan.findUnique({ where: { key: "STARTER" } }));
+
+  const passwordHash = await bcrypt.hash(adminPassword, 10);
+  const trialDays = plan?.trialDays && plan.trialDays > 0 ? plan.trialDays : null;
+  const effectiveStatus =
+    trialDays && input.status !== "ACTIVE" ? "TRIAL" : status;
+  const trialEndsAt =
+    effectiveStatus === "TRIAL"
+      ? addDays(new Date(), trialDays || 14)
+      : null;
+
+  const org = await db.organization.create({
+    data: {
+      name: orgName,
+      slug,
+      status: effectiveStatus,
+      planId: plan?.id,
+      trialEndsAt,
+      users: {
+        create: {
+          email: adminEmail,
+          name: adminName,
+          passwordHash,
+          role: "ORG_ADMIN",
+        },
+      },
+    },
+  });
+
+  if (plan) {
+    const startedAt = new Date();
+    const endsAt =
+      effectiveStatus === "TRIAL"
+        ? trialEndsAt
+        : addYears(startedAt, 1);
+    await db.orgSubscription.create({
+      data: {
+        organizationId: org.id,
+        planId: plan.id,
+        status: effectiveStatus === "ACTIVE" ? "ACTIVE" : "TRIAL",
+        startedAt,
+        endsAt: endsAt || undefined,
+        renewsAt: endsAt || undefined,
+      },
+    });
+  }
+
+  if (input.logo && input.logo.size > 0) {
+    const logoPath = await storeOrganizationLogo(org.id, input.logo);
+    await db.organization.update({
+      where: { id: org.id },
+      data: { logoPath },
+    });
+  }
+
+  await seedOrganizationDefaults(db, org.id);
+  await writeAudit({
+    organizationId: org.id,
+    userId: session.user.id,
+    action: "admin.org.create",
+    entity: "Organization",
+    entityId: org.id,
+    meta: { plan: plan?.key, status, slug, hasLogo: Boolean(input.logo?.size) },
+  });
+
+  revalidatePath("/admin");
+  revalidatePath("/admin/orgs");
+  revalidatePath(`/portal/${org.slug}`);
+  return { id: org.id, slug: org.slug, name: org.name };
+}
+
+export async function updateOrganizationLogo(orgId: string, logo: File) {
+  const session = await requireSuperAdmin();
+  const org = await db.organization.findUnique({ where: { id: orgId } });
+  if (!org) throw new Error("Organization not found");
+
+  const logoPath = await storeOrganizationLogo(org.id, logo);
+  await db.organization.update({
+    where: { id: org.id },
+    data: { logoPath },
+  });
+
+  await writeAudit({
+    organizationId: org.id,
+    userId: session.user.id,
+    action: "admin.org.logo",
+    entity: "Organization",
+    entityId: org.id,
+  });
+
+  revalidatePath("/admin/orgs");
+  revalidatePath(`/admin/orgs/${org.id}`);
+  revalidatePath(`/portal/${org.slug}`);
+  return { logoPath };
+}
+
+export async function setOrganizationStatus(orgId: string, status: TenantStatus) {
+  const session = await requireSuperAdmin();
+  await db.organization.update({
+    where: { id: orgId },
+    data: { status },
+  });
+  await writeAudit({
+    organizationId: orgId,
+    userId: session.user.id,
+    action: "admin.org.status",
+    entity: "Organization",
+    entityId: orgId,
+    meta: { status },
+  });
+  revalidatePath("/admin/orgs");
+  revalidatePath(`/admin/orgs/${orgId}`);
+}
+
+export async function setOrganizationPlan(orgId: string, planId: string) {
+  const session = await requireSuperAdmin();
+  const plan = await db.saaSPlan.findUnique({ where: { id: planId } });
+  if (!plan) throw new Error("Plan not found");
+
+  const startedAt = new Date();
+  const isTrial = Boolean(plan.trialDays && plan.trialDays > 0);
+  const endsAt = isTrial
+    ? addDays(startedAt, plan.trialDays!)
+    : addYears(startedAt, 1);
+  const status = isTrial ? "TRIAL" : "ACTIVE";
+
+  await db.organization.update({
+    where: { id: orgId },
+    data: {
+      planId,
+      status,
+      trialEndsAt: isTrial ? endsAt : null,
+    },
+  });
+  await db.orgSubscription.create({
+    data: {
+      organizationId: orgId,
+      planId,
+      status: isTrial ? "TRIAL" : "ACTIVE",
+      startedAt,
+      endsAt,
+      renewsAt: endsAt,
+    },
+  });
+  await writeAudit({
+    organizationId: orgId,
+    userId: session.user.id,
+    action: "admin.org.plan",
+    entity: "Organization",
+    entityId: orgId,
+    meta: { planId, planKey: plan.key, startedAt, endsAt, status },
+  });
+  revalidatePath("/admin/orgs");
+  revalidatePath(`/admin/orgs/${orgId}`);
+}
+
+function revalidateOrg(orgId: string) {
+  revalidatePath("/admin");
+  revalidatePath("/admin/orgs");
+  revalidatePath(`/admin/orgs/${orgId}`);
+}
+
+export async function updateSubscriptionPeriod(
+  orgId: string,
+  data: { startedAt: string; endsAt: string }
+) {
+  const session = await requireSuperAdmin();
+  const org = await db.organization.findUnique({
+    where: { id: orgId },
+    include: {
+      subscriptions: { orderBy: { createdAt: "desc" }, take: 1 },
+    },
+  });
+  if (!org) throw new Error("Organization not found");
+
+  const startedAt = new Date(data.startedAt);
+  const endsAt = new Date(data.endsAt);
+  if (Number.isNaN(startedAt.getTime()) || Number.isNaN(endsAt.getTime())) {
+    throw new Error("Invalid dates");
+  }
+  if (endsAt <= startedAt) throw new Error("Expiry must be after start");
+
+  const current = org.subscriptions[0];
+  if (current) {
+    await db.orgSubscription.update({
+      where: { id: current.id },
+      data: { startedAt, endsAt, renewsAt: endsAt },
+    });
+  } else if (org.planId) {
+    await db.orgSubscription.create({
+      data: {
+        organizationId: orgId,
+        planId: org.planId,
+        status: org.status === "TRIAL" ? "TRIAL" : "ACTIVE",
+        startedAt,
+        endsAt,
+        renewsAt: endsAt,
+      },
+    });
+  } else {
+    throw new Error("Assign a plan before setting period");
+  }
+
+  if (org.status === "TRIAL") {
+    await db.organization.update({
+      where: { id: orgId },
+      data: { trialEndsAt: endsAt },
+    });
+  }
+
+  await writeAudit({
+    organizationId: orgId,
+    userId: session.user.id,
+    action: "admin.org.period",
+    entity: "Organization",
+    entityId: orgId,
+    meta: { startedAt, endsAt },
+  });
+  revalidateOrg(orgId);
+  return { startedAt, endsAt };
+}
+
+async function nextInvoiceNumber(orgId: string, year: number) {
+  const count = await db.platformInvoice.count({
+    where: { organizationId: orgId, year },
+  });
+  return `INV-${year}-${String(count + 1).padStart(3, "0")}`;
+}
+
+export async function createRenewalInvoice(
+  orgId: string,
+  input?: { year?: number; billingEmail?: string; notes?: string }
+) {
+  const session = await requireSuperAdmin();
+  const org = await db.organization.findUnique({
+    where: { id: orgId },
+    include: {
+      plan: true,
+      subscriptions: { orderBy: { createdAt: "desc" }, take: 1 },
+      users: {
+        where: { role: "ORG_ADMIN", active: true },
+        select: { email: true },
+        take: 1,
+      },
+    },
+  });
+  if (!org) throw new Error("Organization not found");
+  if (!org.plan) throw new Error("Assign a plan first");
+
+  const current = org.subscriptions[0];
+  const periodStart = current?.endsAt
+    ? new Date(current.endsAt)
+    : current?.renewsAt
+      ? new Date(current.renewsAt)
+      : addYears(new Date(), 0);
+  const periodEnd = addYears(periodStart, 1);
+  const year = input?.year || periodStart.getFullYear();
+  // Annual = 12 × monthly
+  const amount = Number(org.plan.priceMonthly) * 12;
+  const billingEmail =
+    input?.billingEmail?.trim() ||
+    org.users[0]?.email ||
+    null;
+
+  const number = await nextInvoiceNumber(orgId, year);
+  const invoice = await db.platformInvoice.create({
+    data: {
+      organizationId: orgId,
+      subscriptionId: current?.id,
+      number,
+      year,
+      amount,
+      status: "DRAFT",
+      periodStart,
+      periodEnd,
+      dueAt: periodStart,
+      billingEmail,
+      notes: input?.notes?.trim() || `Annual renewal for ${year}`,
+    },
+  });
+
+  await writeAudit({
+    organizationId: orgId,
+    userId: session.user.id,
+    action: "admin.invoice.create",
+    entity: "PlatformInvoice",
+    entityId: invoice.id,
+    meta: { number, year, amount },
+  });
+
+  revalidateOrg(orgId);
+  return {
+    id: invoice.id,
+    number: invoice.number,
+    amount,
+    year,
+  };
+}
+
+async function logBillingEvent(params: {
+  invoiceId: string;
+  type: PlatformBillingEventType;
+  toEmail?: string | null;
+  subject?: string;
+  body?: string;
+  mode?: string;
+  createdById?: string;
+}) {
+  return db.platformBillingEvent.create({
+    data: {
+      invoiceId: params.invoiceId,
+      type: params.type,
+      toEmail: params.toEmail || undefined,
+      subject: params.subject,
+      body: params.body,
+      mode: params.mode,
+      createdById: params.createdById,
+    },
+  });
+}
+
+function invoiceEmailBody(opts: {
+  orgName: string;
+  number: string;
+  amount: number;
+  periodStart: Date;
+  periodEnd: Date;
+  kind: "invoice" | "reminder" | "follow_up";
+  extraNote?: string;
+}) {
+  const period = `${format(opts.periodStart, "dd MMM yyyy")} – ${format(
+    opts.periodEnd,
+    "dd MMM yyyy"
+  )}`;
+  const intro =
+    opts.kind === "invoice"
+      ? `Please find your renewal invoice from ${PLATFORM_NAME}.`
+      : opts.kind === "reminder"
+        ? `Friendly reminder: your renewal invoice from ${PLATFORM_NAME} is awaiting payment.`
+        : `Following up on your outstanding renewal invoice from ${PLATFORM_NAME}.`;
+
+  return [
+    `Hello ${opts.orgName} team,`,
+    "",
+    intro,
+    "",
+    `Invoice: ${opts.number}`,
+    `Amount: ${formatCurrency(opts.amount)}`,
+    `Period: ${period}`,
+    opts.extraNote ? `\nNote: ${opts.extraNote}` : "",
+    "",
+    "Reply to this email if you have questions.",
+    "",
+    `— ${PLATFORM_NAME} Billing`,
+  ]
+    .filter(Boolean)
+    .join("\n");
+}
+
+export async function sendPlatformInvoiceEmail(invoiceId: string) {
+  const session = await requireSuperAdmin();
+  const invoice = await db.platformInvoice.findUnique({
+    where: { id: invoiceId },
+    include: { organization: { select: { id: true, name: true } } },
+  });
+  if (!invoice) throw new Error("Invoice not found");
+  if (!invoice.billingEmail) throw new Error("Set a billing email first");
+
+  const subject = `${PLATFORM_NAME} invoice ${invoice.number} — ${invoice.organization.name}`;
+  const body = invoiceEmailBody({
+    orgName: invoice.organization.name,
+    number: invoice.number,
+    amount: Number(invoice.amount),
+    periodStart: invoice.periodStart,
+    periodEnd: invoice.periodEnd,
+    kind: "invoice",
+    extraNote: invoice.notes || undefined,
+  });
+
+  const result = await sendPlatformEmail(invoice.billingEmail, subject, body);
+  if (!result.ok) throw new Error(result.error || "Email failed");
+
+  await db.platformInvoice.update({
+    where: { id: invoiceId },
+    data: {
+      status: invoice.status === "PAID" ? "PAID" : "SENT",
+      sentAt: invoice.sentAt || new Date(),
+    },
+  });
+
+  await logBillingEvent({
+    invoiceId,
+    type: "INVOICE_SENT",
+    toEmail: invoice.billingEmail,
+    subject,
+    body,
+    mode: result.mode,
+    createdById: session.user.id,
+  });
+
+  await writeAudit({
+    organizationId: invoice.organizationId,
+    userId: session.user.id,
+    action: "admin.invoice.send",
+    entity: "PlatformInvoice",
+    entityId: invoiceId,
+    meta: { mode: result.mode, to: invoice.billingEmail },
+  });
+
+  revalidateOrg(invoice.organizationId);
+  return { mode: result.mode };
+}
+
+export async function sendPlatformInvoiceReminder(
+  invoiceId: string,
+  note?: string
+) {
+  const session = await requireSuperAdmin();
+  const invoice = await db.platformInvoice.findUnique({
+    where: { id: invoiceId },
+    include: { organization: { select: { id: true, name: true } } },
+  });
+  if (!invoice) throw new Error("Invoice not found");
+  if (invoice.status === "PAID") throw new Error("Invoice already paid");
+  if (!invoice.billingEmail) throw new Error("Set a billing email first");
+
+  const subject = `Reminder: ${PLATFORM_NAME} invoice ${invoice.number}`;
+  const body = invoiceEmailBody({
+    orgName: invoice.organization.name,
+    number: invoice.number,
+    amount: Number(invoice.amount),
+    periodStart: invoice.periodStart,
+    periodEnd: invoice.periodEnd,
+    kind: "reminder",
+    extraNote: note?.trim() || invoice.notes || undefined,
+  });
+
+  const result = await sendPlatformEmail(invoice.billingEmail, subject, body);
+  if (!result.ok) throw new Error(result.error || "Email failed");
+
+  if (invoice.status === "DRAFT") {
+    await db.platformInvoice.update({
+      where: { id: invoiceId },
+      data: { status: "SENT", sentAt: invoice.sentAt || new Date() },
+    });
+  }
+
+  await logBillingEvent({
+    invoiceId,
+    type: "REMINDER",
+    toEmail: invoice.billingEmail,
+    subject,
+    body,
+    mode: result.mode,
+    createdById: session.user.id,
+  });
+
+  revalidateOrg(invoice.organizationId);
+  return { mode: result.mode };
+}
+
+export async function sendPlatformInvoiceFollowUp(
+  invoiceId: string,
+  note?: string
+) {
+  const session = await requireSuperAdmin();
+  const invoice = await db.platformInvoice.findUnique({
+    where: { id: invoiceId },
+    include: { organization: { select: { id: true, name: true } } },
+  });
+  if (!invoice) throw new Error("Invoice not found");
+  if (invoice.status === "PAID") throw new Error("Invoice already paid");
+  if (!invoice.billingEmail) throw new Error("Set a billing email first");
+
+  const subject = `Follow-up: ${PLATFORM_NAME} invoice ${invoice.number}`;
+  const body = invoiceEmailBody({
+    orgName: invoice.organization.name,
+    number: invoice.number,
+    amount: Number(invoice.amount),
+    periodStart: invoice.periodStart,
+    periodEnd: invoice.periodEnd,
+    kind: "follow_up",
+    extraNote:
+      note?.trim() ||
+      "Please confirm payment timeline so we can keep your workspace active.",
+  });
+
+  const result = await sendPlatformEmail(invoice.billingEmail, subject, body);
+  if (!result.ok) throw new Error(result.error || "Email failed");
+
+  await logBillingEvent({
+    invoiceId,
+    type: "FOLLOW_UP",
+    toEmail: invoice.billingEmail,
+    subject,
+    body,
+    mode: result.mode,
+    createdById: session.user.id,
+  });
+
+  revalidateOrg(invoice.organizationId);
+  return { mode: result.mode };
+}
+
+export async function markPlatformInvoicePaid(invoiceId: string) {
+  const session = await requireSuperAdmin();
+  const invoice = await db.platformInvoice.findUnique({
+    where: { id: invoiceId },
+    include: { subscription: true },
+  });
+  if (!invoice) throw new Error("Invoice not found");
+
+  await db.platformInvoice.update({
+    where: { id: invoiceId },
+    data: { status: "PAID", paidAt: new Date() },
+  });
+
+  if (invoice.subscriptionId) {
+    await db.orgSubscription.update({
+      where: { id: invoice.subscriptionId },
+      data: {
+        status: "ACTIVE",
+        startedAt: invoice.periodStart,
+        endsAt: invoice.periodEnd,
+        renewsAt: invoice.periodEnd,
+      },
+    });
+  }
+
+  await db.organization.update({
+    where: { id: invoice.organizationId },
+    data: { status: "ACTIVE", trialEndsAt: null },
+  });
+
+  await logBillingEvent({
+    invoiceId,
+    type: "MARKED_PAID",
+    createdById: session.user.id,
+    body: `Marked paid ${formatCurrency(Number(invoice.amount))}`,
+  });
+
+  await writeAudit({
+    organizationId: invoice.organizationId,
+    userId: session.user.id,
+    action: "admin.invoice.paid",
+    entity: "PlatformInvoice",
+    entityId: invoiceId,
+  });
+
+  revalidateOrg(invoice.organizationId);
+}
+
+export async function updateInvoiceBillingEmail(
+  invoiceId: string,
+  billingEmail: string
+) {
+  await requireSuperAdmin();
+  const email = billingEmail.trim().toLowerCase();
+  if (!email.includes("@")) throw new Error("Valid email required");
+  const invoice = await db.platformInvoice.update({
+    where: { id: invoiceId },
+    data: { billingEmail: email },
+  });
+  revalidateOrg(invoice.organizationId);
+}
+
+export async function updateSaaSPlan(
+  planId: string,
+  data: {
+    name?: string;
+    priceMonthly?: number;
+    description?: string;
+    maxUsers?: number;
+    maxTicketsPerMonth?: number;
+    trialDays?: number | null;
+    active?: boolean;
+    features?: string[];
+  }
+) {
+  await requireSuperAdmin();
+  await db.saaSPlan.update({
+    where: { id: planId },
+    data: {
+      name: data.name,
+      priceMonthly: data.priceMonthly,
+      description: data.description,
+      maxUsers: data.maxUsers,
+      maxTicketsPerMonth: data.maxTicketsPerMonth,
+      trialDays: data.trialDays,
+      active: data.active,
+      features: data.features,
+    },
+  });
+  revalidatePath("/admin/plans");
+  revalidatePath("/site/pricing");
+  revalidatePath("/admin");
+}
+
+function revalidateWebsite() {
+  revalidatePath("/admin/website");
+  revalidatePath("/admin");
+  revalidatePath("/site");
+  revalidatePath("/site/pricing");
+  revalidatePath("/site/features");
+  revalidatePath("/site/about");
+  revalidatePath("/site/contact");
+}
+
+export async function updateWebsiteSettings(data: {
+  brandName: string;
+  heroBadge: string;
+  heroHeadline: string;
+  heroSubtext: string;
+  heroCtaLabel: string;
+  heroCtaHref: string;
+  heroSecondaryLabel: string;
+  heroSecondaryHref: string;
+  heroStats: { value: string; label: string }[];
+  newsTickerItems: string[];
+  featuresTitle: string;
+  featuresSubtitle: string;
+  sectionTitle: string;
+  sectionBody: string;
+  midTitle: string;
+  midBody: string;
+  analysisTitle: string;
+  analysisBody: string;
+  analysisBullets: string[];
+  integrationsTitle: string;
+  integrationsBody: string;
+  integrations: string[];
+  ctaTitle: string;
+  ctaBody: string;
+  contactEmail: string;
+  contactPhone: string;
+  footerBlurb: string;
+  footerNote: string;
+  copyrightName: string;
+}) {
+  await requireSuperAdmin();
+  const brandName = data.brandName.trim() || "PulseCRM";
+  const heroStats = data.heroStats
+    .map((s) => ({
+      value: String(s.value || "").trim(),
+      label: String(s.label || "").trim(),
+    }))
+    .filter((s) => s.value && s.label)
+    .slice(0, 6);
+  const newsTickerItems = data.newsTickerItems
+    .map((s) => s.trim())
+    .filter(Boolean)
+    .slice(0, 24);
+  const analysisBullets = data.analysisBullets
+    .map((s) => s.trim())
+    .filter(Boolean)
+    .slice(0, 12);
+  const integrations = data.integrations
+    .map((s) => s.trim())
+    .filter(Boolean)
+    .slice(0, 16);
+
+  const payload = {
+    brandName,
+    heroBadge: data.heroBadge.trim() || "CRM & SaaS",
+    heroHeadline: data.heroHeadline.trim(),
+    heroSubtext: data.heroSubtext.trim(),
+    heroCtaLabel: data.heroCtaLabel.trim(),
+    heroCtaHref: data.heroCtaHref.trim() || "/register",
+    heroSecondaryLabel: data.heroSecondaryLabel.trim(),
+    heroSecondaryHref: data.heroSecondaryHref.trim() || "/site/pricing",
+    heroStats,
+    newsTickerItems,
+    featuresTitle: data.featuresTitle.trim(),
+    featuresSubtitle: data.featuresSubtitle.trim(),
+    sectionTitle: data.sectionTitle.trim(),
+    sectionBody: data.sectionBody.trim(),
+    midTitle: data.midTitle.trim(),
+    midBody: data.midBody.trim(),
+    analysisTitle: data.analysisTitle.trim(),
+    analysisBody: data.analysisBody.trim(),
+    analysisBullets,
+    integrationsTitle: data.integrationsTitle.trim(),
+    integrationsBody: data.integrationsBody.trim(),
+    integrations,
+    ctaTitle: data.ctaTitle.trim(),
+    ctaBody: data.ctaBody.trim(),
+    contactEmail: data.contactEmail.trim() || "info@yourmail.com",
+    contactPhone: data.contactPhone.trim() || "(00) 99 222 99566",
+    footerBlurb: data.footerBlurb.trim(),
+    footerNote: data.footerNote.trim(),
+    copyrightName: data.copyrightName.trim() || brandName,
+  };
+
+  await db.platformWebsiteSettings.upsert({
+    where: { id: "default" },
+    create: { id: "default", ...payload },
+    update: payload,
+  });
+  revalidateWebsite();
+}
+
+export async function updateWebsiteLogo(logo: File) {
+  await requireSuperAdmin();
+  const { storePlatformLogo } = await import("@/lib/platform-logo-server");
+  const logoPath = await storePlatformLogo(logo);
+  await db.platformWebsiteSettings.upsert({
+    where: { id: "default" },
+    create: { id: "default", logoPath },
+    update: { logoPath },
+  });
+  revalidateWebsite();
+  return { logoPath };
+}
+
+export async function clearWebsiteLogo() {
+  await requireSuperAdmin();
+  await db.platformWebsiteSettings.upsert({
+    where: { id: "default" },
+    create: { id: "default", logoPath: null },
+    update: { logoPath: null },
+  });
+  revalidateWebsite();
+}
+
+export type { SaaSPlanKey, SubscriptionStatus };
