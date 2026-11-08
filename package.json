@@ -5,9 +5,9 @@
   "scripts": {
     "dev": "next dev --webpack",
     "build": "prisma generate && next build --webpack",
-    "start": "node scripts/db-bootstrap.mjs; next start",
+    "start": "node prisma/db-bootstrap.mjs; next start",
     "db:deploy": "prisma migrate deploy",
-    "db:bootstrap": "node scripts/db-bootstrap.mjs",
+    "db:bootstrap": "node prisma/db-bootstrap.mjs",
     "lint": "eslint",
     "db:migrate": "prisma migrate dev",
     "db:seed": "tsx prisma/seed.ts",
