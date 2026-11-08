@@ -12,8 +12,12 @@ function redact(message: string): string {
 }
 
 export async function GET() {
-  const url = process.env.DATABASE_URL || "";
-  const urlOk = url.startsWith("mysql://");
+  const raw = process.env.DATABASE_URL || "";
+  // Hostinger sometimes stores quoted values: "mysql://..."
+  const url = raw.trim().replace(/^['"]|['"]$/g, "");
+  const schemeMatch = url.match(/^([a-zA-Z0-9+.-]+):\/\//);
+  const scheme = schemeMatch?.[1] ?? (url ? "(no-scheme)" : "(empty)");
+  const urlOk = scheme === "mysql";
   const hostHint = urlOk
     ? url.replace(/^mysql:\/\/[^@]+@/, "").split("/")[0] || "?"
     : null;
@@ -24,13 +28,15 @@ export async function GET() {
     time: new Date().toISOString(),
     databaseUrlSet: Boolean(url),
     databaseUrlMysql: urlOk,
+    scheme,
     hostHint,
     authSecretSet: Boolean(process.env.AUTH_SECRET),
+    expected:
+      "mysql://u226394950_saledek_user:Saledek%40007@127.0.0.1:3306/u226394950_saledek",
   };
 
   if (!urlOk) {
-    body.error =
-      "DATABASE_URL missing or not mysql:// — set Hostinger MySQL URL (127.0.0.1).";
+    body.error = `DATABASE_URL scheme is "${scheme}" — must be mysql:// (not postgresql://). Delete the old variable and add a new mysql:// URL, then Redeploy.`;
     return NextResponse.json(body, { status: 503 });
   }
 

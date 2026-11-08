@@ -44,7 +44,12 @@ try {
   /* ignore */
 }
 
-const url = process.env.DATABASE_URL || "";
+const raw = process.env.DATABASE_URL || "";
+const url = raw.trim().replace(/^['"]|['"]$/g, "");
+if (url !== raw) {
+  process.env.DATABASE_URL = url;
+  log("stripped quotes from DATABASE_URL");
+}
 const redacted = url
   ? url.replace(/:\/\/([^:]+):([^@]+)@/, "://$1:***@")
   : "(empty)";
@@ -52,7 +57,10 @@ const redacted = url
 log("DATABASE_URL =", redacted);
 
 if (!url.startsWith("mysql://")) {
-  log("ERROR: DATABASE_URL must start with mysql:// (Hostinger MySQL).");
+  const scheme = (url.match(/^([a-zA-Z0-9+.-]+):\/\//) || [])[1] || "(none)";
+  log(
+    `ERROR: DATABASE_URL must start with mysql:// — current scheme="${scheme}". Delete old postgresql:// value on Hostinger and set MySQL URL.`,
+  );
   process.exit(0);
 }
 
