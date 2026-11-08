@@ -104,12 +104,12 @@ export function CustomerProfileModal({
       try {
         await updateCustomer(profile.id, {
           name: String(fd.get("name") || ""),
-          phone: String(fd.get("phone") || "") || null,
-          email: String(fd.get("email") || "") || null,
-          cnic: String(fd.get("cnic") || "") || null,
-          address: String(fd.get("address") || "") || null,
-          city: String(fd.get("city") || "") || null,
-          source: String(fd.get("source") || "") || null,
+          phone: String(fd.get("phone") || "") || undefined,
+          email: String(fd.get("email") || "") || undefined,
+          cnic: String(fd.get("cnic") || "") || undefined,
+          address: String(fd.get("address") || "") || undefined,
+          city: String(fd.get("city") || "") || undefined,
+          source: String(fd.get("source") || "") || undefined,
           status: String(fd.get("status") || "LEAD") as CustomerStatus,
           companyId: String(fd.get("companyId") || "") || null,
           jobTitle: String(fd.get("jobTitle") || "") || null,

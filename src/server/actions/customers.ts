@@ -218,7 +218,7 @@ export async function updateCustomer(
       ...(data.source !== undefined ? { source: data.source || null } : {}),
       ...(data.status !== undefined ? { status: data.status } : {}),
       ...(companyId !== undefined ? { companyId } : {}),
-      customData: nextCustom,
+      customData: nextCustom as import("@prisma/client").Prisma.InputJsonValue,
     },
   });
 

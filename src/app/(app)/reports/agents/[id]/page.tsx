@@ -140,7 +140,7 @@ export default async function AgentReportDetailPage({
 
   const paymentConfirmedWhere = {
     confirmedById: user.id,
-    status: { in: ["PAID", "CLEARED", "RECEIVED"] as const },
+    status: { in: ["PAID", "CLEARED", "RECEIVED"] },
     ...(rangeStart
       ? { OR: [{ paidAt: { gte: rangeStart, lte: rangeEnd } }, { paidAt: null, createdAt: { gte: rangeStart, lte: rangeEnd } }] }
       : {}),
@@ -338,8 +338,11 @@ export default async function AgentReportDetailPage({
 
   const paidRevenue = Number(paidOrdersAgg._sum.total || 0);
   const orderValue = Number(ordersValueAgg._sum.total || 0);
-  const confirmedAmount = Number(paymentsConfirmedAgg._sum.amount || 0);
-  const confirmedCount = paymentsConfirmedAgg._count;
+  const confirmedAmount = Number(paymentsConfirmedAgg._sum?.amount || 0);
+  const confirmedCount =
+    typeof paymentsConfirmedAgg._count === "number"
+      ? paymentsConfirmedAgg._count
+      : Number(paymentsConfirmedAgg._count?._all || 0);
   const resolveRate =
     assignedInRange === 0
       ? 0

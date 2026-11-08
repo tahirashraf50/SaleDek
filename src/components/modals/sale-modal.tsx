@@ -52,7 +52,7 @@ type Lookup = {
     name: string;
     unitPrice: number;
     taxPercent: number;
-    formFields: ProductFormField[];
+    formFields?: ProductFormField[];
     priceRule?: ProductPriceRule | null;
   }[];
 };
