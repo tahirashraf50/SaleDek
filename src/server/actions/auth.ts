@@ -93,26 +93,58 @@ export async function registerOrganization(formData: FormData) {
   }
 }
 
-export async function loginAction(formData: FormData) {
+export type LoginState = { error?: string };
+
+function isNextRedirect(error: unknown): boolean {
+  return (
+    typeof error === "object" &&
+    error !== null &&
+    "digest" in error &&
+    typeof (error as { digest?: unknown }).digest === "string" &&
+    String((error as { digest: string }).digest).startsWith("NEXT_REDIRECT")
+  );
+}
+
+export async function loginAction(
+  _prev: LoginState,
+  formData: FormData,
+): Promise<LoginState> {
   const email = String(formData.get("email") || "").trim().toLowerCase();
   const password = String(formData.get("password") || "");
 
-  const user = await db.user.findUnique({
-    where: { email },
-    select: { role: true },
-  });
+  if (!email || !password) {
+    return { error: "Enter email and password." };
+  }
+
+  let redirectTo = "/inbox";
+  try {
+    const user = await db.user.findUnique({
+      where: { email },
+      select: { role: true },
+    });
+    if (user?.role === "SUPER_ADMIN") redirectTo = "/admin";
+  } catch (err) {
+    console.error("[loginAction] database error:", err);
+    return {
+      error:
+        "Database is not ready yet. Wait for migrations/seed to finish, then try again.",
+    };
+  }
 
   try {
     await signIn("credentials", {
       email,
       password,
-      redirectTo: user?.role === "SUPER_ADMIN" ? "/admin" : "/inbox",
+      redirectTo,
     });
+    return {};
   } catch (error) {
+    if (isNextRedirect(error)) throw error;
     if (error instanceof AuthError) {
-      throw new Error("Invalid email or password.");
+      return { error: "Invalid email or password." };
     }
-    throw error;
+    console.error("[loginAction] unexpected:", error);
+    return { error: "Sign-in failed. Check AUTH_SECRET and try again." };
   }
 }
 

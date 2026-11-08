@@ -6,48 +6,59 @@ import { addDays, subDays } from "date-fns";
 const db = new PrismaClient();
 
 async function main() {
-  await db.auditLog.deleteMany();
-  await db.notification.deleteMany();
-  await db.automationRule.deleteMany();
-  await db.installment.deleteMany();
-  await db.payment.deleteMany();
-  await db.orderItem.deleteMany();
-  await db.order.deleteMany();
-  await db.deal.deleteMany();
-  await db.csatResponse.deleteMany();
-  await db.slaTimer.deleteMany();
-  await db.ticketLink.deleteMany();
-  await db.ticketWatcher.deleteMany();
-  await db.ticketNote.deleteMany();
-  await db.ticketTag.deleteMany();
-  await db.attachment.deleteMany();
-  await db.ticket.deleteMany();
-  await db.message.deleteMany();
-  await db.callLog.deleteMany();
-  await db.conversation.deleteMany();
-  await db.productReview.deleteMany();
-  await db.channelConnector.deleteMany();
-  await db.activity.deleteMany();
-  await db.note.deleteMany();
-  await db.customerTag.deleteMany();
-  await db.customer.deleteMany();
-  await db.company.deleteMany();
-  await db.tag.deleteMany();
-  await db.product.deleteMany();
-  await db.slaPolicy.deleteMany();
-  await db.ticketType.deleteMany();
-  await db.ticketStage.deleteMany();
-  await db.dealStage.deleteMany();
-  await db.knowledgeArticle.deleteMany();
-  await db.customField.deleteMany();
-  await db.savedView.deleteMany();
-  await db.teamMember.deleteMany();
-  await db.team.deleteMany();
-  await db.user.deleteMany();
-  await db.orgSubscription.deleteMany();
-  await db.department.deleteMany();
-  await db.organization.deleteMany();
-  await db.saaSPlan.deleteMany();
+  // Production-safe: never wipe a live DB on every `npm start`.
+  // Force a full reseed with SEED_FORCE=1 (local only).
+  const force = process.env.SEED_FORCE === "1";
+  const existingUsers = await db.user.count().catch(() => 0);
+  if (!force && existingUsers > 0) {
+    console.log(`Seed skipped (${existingUsers} users already present).`);
+    return;
+  }
+
+  if (force) {
+    await db.auditLog.deleteMany();
+    await db.notification.deleteMany();
+    await db.automationRule.deleteMany();
+    await db.installment.deleteMany();
+    await db.payment.deleteMany();
+    await db.orderItem.deleteMany();
+    await db.order.deleteMany();
+    await db.deal.deleteMany();
+    await db.csatResponse.deleteMany();
+    await db.slaTimer.deleteMany();
+    await db.ticketLink.deleteMany();
+    await db.ticketWatcher.deleteMany();
+    await db.ticketNote.deleteMany();
+    await db.ticketTag.deleteMany();
+    await db.attachment.deleteMany();
+    await db.ticket.deleteMany();
+    await db.message.deleteMany();
+    await db.callLog.deleteMany();
+    await db.conversation.deleteMany();
+    await db.productReview.deleteMany();
+    await db.channelConnector.deleteMany();
+    await db.activity.deleteMany();
+    await db.note.deleteMany();
+    await db.customerTag.deleteMany();
+    await db.customer.deleteMany();
+    await db.company.deleteMany();
+    await db.tag.deleteMany();
+    await db.product.deleteMany();
+    await db.slaPolicy.deleteMany();
+    await db.ticketType.deleteMany();
+    await db.ticketStage.deleteMany();
+    await db.dealStage.deleteMany();
+    await db.knowledgeArticle.deleteMany();
+    await db.customField.deleteMany();
+    await db.savedView.deleteMany();
+    await db.teamMember.deleteMany();
+    await db.team.deleteMany();
+    await db.user.deleteMany();
+    await db.orgSubscription.deleteMany();
+    await db.department.deleteMany();
+    await db.organization.deleteMany();
+    await db.saaSPlan.deleteMany();
+  }
 
   const passwordHash = await bcrypt.hash("demo1234", 10);
 

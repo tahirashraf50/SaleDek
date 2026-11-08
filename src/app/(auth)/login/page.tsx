@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { ArrowLeft, CheckCircle2, Lock, Shield, Users } from "lucide-react";
-import { loginAction } from "@/server/actions/auth";
+import { LoginForm } from "@/components/auth/login-form";
 import { getWebsiteSettings } from "@/lib/platform-website";
 
 export const dynamic = "force-dynamic";
@@ -112,68 +112,7 @@ export default async function LoginPage() {
         </header>
 
         <main className="relative z-10 flex flex-1 items-start justify-center px-5 pb-10 pt-6 md:px-10 md:pt-10 lg:items-center lg:px-12 lg:pt-0">
-          <div className="site-anim-fade w-full max-w-[400px] lg:-mt-8">
-            <span className="site-pill">Agent login</span>
-            <h1 className="mt-3 text-3xl font-semibold tracking-tight text-[var(--site-ink)] md:text-4xl">
-              Welcome back
-            </h1>
-            <p className="mt-2 text-sm leading-relaxed text-[var(--site-muted)]">
-              Sign in to your {site.brandName} workspace
-            </p>
-
-            <form action={loginAction} className="mt-7 space-y-4">
-              <div>
-                <label
-                  htmlFor="email"
-                  className="mb-1.5 block text-xs font-semibold uppercase tracking-[0.08em] text-[var(--site-muted)]"
-                >
-                  Email
-                </label>
-                <input
-                  id="email"
-                  name="email"
-                  type="email"
-                  required
-                  defaultValue="admin@demo.com"
-                  autoComplete="email"
-                  className="h-12 w-full rounded-2xl border border-[var(--site-line)] bg-white px-4 text-sm text-[var(--site-ink)] outline-none transition focus:border-[var(--site-purple)] focus:ring-4 focus:ring-[rgba(172,22,224,0.12)]"
-                />
-              </div>
-              <div>
-                <label
-                  htmlFor="password"
-                  className="mb-1.5 block text-xs font-semibold uppercase tracking-[0.08em] text-[var(--site-muted)]"
-                >
-                  Password
-                </label>
-                <input
-                  id="password"
-                  name="password"
-                  type="password"
-                  required
-                  defaultValue="demo1234"
-                  autoComplete="current-password"
-                  className="h-12 w-full rounded-2xl border border-[var(--site-line)] bg-white px-4 text-sm text-[var(--site-ink)] outline-none transition focus:border-[var(--site-purple)] focus:ring-4 focus:ring-[rgba(172,22,224,0.12)]"
-                />
-              </div>
-              <button type="submit" className="site-btn-primary w-full">
-                Sign in
-              </button>
-            </form>
-
-            <p className="mt-5 text-sm text-[var(--site-muted)]">
-              New org?{" "}
-              <Link
-                href="/register"
-                className="font-semibold text-[var(--site-purple)] hover:underline"
-              >
-                Register
-              </Link>
-            </p>
-            <p className="mt-3 text-[11px] leading-relaxed text-[var(--site-muted)]">
-              Demo · admin@demo.com · finance@demo.com · super@pulsecrm.com · pass demo1234
-            </p>
-          </div>
+          <LoginForm brandName={site.brandName} />
         </main>
       </div>
     </div>

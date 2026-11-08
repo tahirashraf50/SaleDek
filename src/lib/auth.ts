@@ -5,6 +5,7 @@ import { db } from "@/lib/db";
 import { Role, TenantStatus } from "@prisma/client";
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
+  trustHost: true,
   session: { strategy: "jwt" },
   pages: {
     signIn: "/login",
@@ -17,30 +18,35 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         password: { label: "Password", type: "password" },
       },
       async authorize(credentials) {
-        const email = credentials?.email as string | undefined;
-        const password = credentials?.password as string | undefined;
-        if (!email || !password) return null;
+        try {
+          const email = credentials?.email as string | undefined;
+          const password = credentials?.password as string | undefined;
+          if (!email || !password) return null;
 
-        const user = await db.user.findUnique({
-          where: { email: email.toLowerCase() },
-          include: { organization: true },
-        });
-        if (!user || !user.active) return null;
+          const user = await db.user.findUnique({
+            where: { email: email.toLowerCase() },
+            include: { organization: true },
+          });
+          if (!user || !user.active) return null;
 
-        const valid = await bcrypt.compare(password, user.passwordHash);
-        if (!valid) return null;
+          const valid = await bcrypt.compare(password, user.passwordHash);
+          if (!valid) return null;
 
-        return {
-          id: user.id,
-          email: user.email,
-          name: user.name,
-          role: user.role,
-          organizationId: user.organizationId,
-          organizationName: user.organization?.name ?? null,
-          organizationStatus: user.organization?.status ?? null,
-          organizationSlug: user.organization?.slug ?? null,
-          departmentId: user.departmentId ?? null,
-        };
+          return {
+            id: user.id,
+            email: user.email,
+            name: user.name,
+            role: user.role,
+            organizationId: user.organizationId,
+            organizationName: user.organization?.name ?? null,
+            organizationStatus: user.organization?.status ?? null,
+            organizationSlug: user.organization?.slug ?? null,
+            departmentId: user.departmentId ?? null,
+          };
+        } catch (err) {
+          console.error("[auth.authorize] failed:", err);
+          return null;
+        }
       },
     }),
   ],
