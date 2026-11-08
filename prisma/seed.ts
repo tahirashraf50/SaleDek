@@ -95,7 +95,7 @@ async function main() {
     data: {
       key: "STARTER",
       name: "Starter",
-      priceMonthly: 9999,
+      priceMonthly: 29,
       description: "For small support desks getting started",
       features: ["1 inbox", "Up to 5 users", "500 tickets/mo", "Basic reports"],
       maxUsers: 5,
@@ -107,7 +107,7 @@ async function main() {
     data: {
       key: "PRO",
       name: "Pro",
-      priceMonthly: 24999,
+      priceMonthly: 99,
       description: "Omnichannel + sales for growing teams",
       features: [
         "WhatsApp / Email / Call inbox",
@@ -125,7 +125,7 @@ async function main() {
     data: {
       key: "ENTERPRISE",
       name: "Enterprise",
-      priceMonthly: 59999,
+      priceMonthly: 299,
       description: "Scale, controls, and priority support",
       features: [
         "Unlimited users*",

@@ -3,7 +3,7 @@ import { Building2, Ticket, Users } from "lucide-react";
 import { TenantStatus } from "@prisma/client";
 import { db } from "@/lib/db";
 import { requireSuperAdmin } from "@/lib/session";
-import { cn, formatCurrency, formatDate } from "@/lib/utils";
+import { cn, formatCurrency, formatDate, formatPlatformCurrency } from "@/lib/utils";
 import { setOrganizationStatus } from "@/server/actions/admin";
 import { CreateTenantDialog } from "@/components/admin/create-tenant-dialog";
 import { DeleteTenantButton } from "@/components/admin/delete-tenant-button";
@@ -127,7 +127,7 @@ export default async function AdminOrgsPage() {
                       <div>
                         <p className="font-medium text-slate-800">{o.plan.name}</p>
                         <p className="text-[11px] text-slate-400">
-                          {formatCurrency(Number(o.plan.priceMonthly))}/mo
+                          {formatPlatformCurrency(Number(o.plan.priceMonthly))}/mo
                         </p>
                       </div>
                     ) : (

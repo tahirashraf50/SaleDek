@@ -10,7 +10,8 @@ import {
 } from "lucide-react";
 import { db } from "@/lib/db";
 import { requireSuperAdmin } from "@/lib/session";
-import { cn, formatCurrency } from "@/lib/utils";
+import { PLATFORM_BILLING_CURRENCY } from "@/lib/currency";
+import { cn, formatPlatformCurrency } from "@/lib/utils";
 import { updateSaaSPlan } from "@/server/actions/admin";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -109,7 +110,7 @@ export default async function AdminPlansPage() {
             <p className="text-[11px] text-teal-100/70">Paid MRR range</p>
             <p className="mt-0.5 text-lg font-bold leading-8">
               {paid.length
-                ? `${formatCurrency(Math.min(...paid.map((p) => Number(p.priceMonthly))))} – ${formatCurrency(Math.max(...paid.map((p) => Number(p.priceMonthly))))}`
+                ? `${formatPlatformCurrency(Math.min(...paid.map((p) => Number(p.priceMonthly))))} – ${formatPlatformCurrency(Math.max(...paid.map((p) => Number(p.priceMonthly))))}`
                 : "—"}
             </p>
           </div>
@@ -188,10 +189,10 @@ export default async function AdminPlansPage() {
 
                 <div className="mt-4 flex flex-wrap items-end gap-3">
                   <p className="text-3xl font-bold tracking-tight text-slate-900">
-                    {price === 0 ? "Free" : formatCurrency(price)}
+                    {price === 0 ? "Free" : formatPlatformCurrency(price)}
                     {price > 0 ? (
                       <span className="text-sm font-normal text-slate-500">
-                        /mo
+                        /mo {PLATFORM_BILLING_CURRENCY}
                       </span>
                     ) : null}
                   </p>
@@ -234,11 +235,12 @@ export default async function AdminPlansPage() {
                     <Input name="name" defaultValue={p.name} className="mt-1" />
                   </div>
                   <div>
-                    <Label>Price / month (PKR)</Label>
+                    <Label>Price / month (USD)</Label>
                     <Input
                       name="priceMonthly"
                       type="number"
                       min={0}
+                      step="0.01"
                       defaultValue={price}
                       className="mt-1"
                     />

@@ -14,7 +14,7 @@ import {
 import { format, subDays } from "date-fns";
 import { db } from "@/lib/db";
 import { requireSuperAdmin } from "@/lib/session";
-import { cn, formatCurrency, formatDate } from "@/lib/utils";
+import { cn, formatCurrency, formatDate, formatPlatformCurrency } from "@/lib/utils";
 
 const STATUS_STYLE: Record<string, string> = {
   ACTIVE: "bg-emerald-50 text-emerald-800 ring-emerald-100",
@@ -146,7 +146,7 @@ export default async function AdminHomePage() {
     },
     {
       label: "Est. MRR",
-      value: formatCurrency(mrr),
+      value: formatPlatformCurrency(mrr),
       hint: "Active plan sum",
       href: "/admin/plans",
       icon: Wallet,
@@ -206,7 +206,7 @@ export default async function AdminHomePage() {
               ))}
             </div>
             <p className="text-sm text-slate-500">
-              {orgs} tenants · {formatCurrency(mrr)} MRR · manage SaaS health
+              {orgs} tenants · {formatPlatformCurrency(mrr)} MRR · manage SaaS health
             </p>
           </div>
         </div>
@@ -327,7 +327,7 @@ export default async function AdminHomePage() {
                     {" · "}
                     {o.plan?.name || "No plan"}
                     {o.plan
-                      ? ` · ${formatCurrency(Number(o.plan.priceMonthly))}/mo`
+                      ? ` · ${formatPlatformCurrency(Number(o.plan.priceMonthly))}/mo`
                       : ""}
                   </p>
                   <p className="mt-0.5 text-[11px] text-slate-400">
@@ -372,7 +372,7 @@ export default async function AdminHomePage() {
                   <div className="mb-1 flex items-center justify-between gap-2 text-xs">
                     <span className="font-semibold text-slate-800">{p.name}</span>
                     <span className="text-slate-500">
-                      {p.count} · {formatCurrency(p.revenue)} MRR
+                      {p.count} · {formatPlatformCurrency(p.revenue)} MRR
                     </span>
                   </div>
                   <div className="h-2 overflow-hidden rounded-full bg-slate-100">

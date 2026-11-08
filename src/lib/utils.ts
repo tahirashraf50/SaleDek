@@ -1,6 +1,6 @@
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
-import { getCurrencyMeta } from "@/lib/currency";
+import { getCurrencyMeta, PLATFORM_BILLING_CURRENCY } from "@/lib/currency";
 import { getRequestCurrency } from "@/lib/org-currency-store";
 
 export function cn(...inputs: ClassValue[]) {
@@ -36,6 +36,11 @@ export function formatCurrency(
     maximumFractionDigits: meta.fractionDigits,
     minimumFractionDigits: meta.fractionDigits > 0 ? 0 : 0,
   }).format(n || 0);
+}
+
+/** SaaS plan prices / platform billing — always USD. */
+export function formatPlatformCurrency(value: number | string) {
+  return formatCurrency(value, PLATFORM_BILLING_CURRENCY);
 }
 
 export function formatDate(date: Date | string | null | undefined) {

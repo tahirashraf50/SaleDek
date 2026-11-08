@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { CreditCard, FileText } from "lucide-react";
 import { requireOrgSession } from "@/lib/session";
 import { db } from "@/lib/db";
-import { cn, formatCurrency, formatDate } from "@/lib/utils";
+import {cn, formatCurrency, formatDate, formatPlatformCurrency} from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
@@ -78,7 +78,7 @@ export default async function BillingSettingsPage() {
             </div>
             {plan && (
               <p className="text-lg font-semibold text-slate-800">
-                {formatCurrency(Number(plan.priceMonthly), "PKR")}
+                {formatPlatformCurrency(Number(plan.priceMonthly))}
                 <span className="text-sm font-normal text-slate-400">/mo</span>
               </p>
             )}
@@ -162,7 +162,7 @@ export default async function BillingSettingsPage() {
                     {inv.status}
                   </span>
                   <p className="text-sm font-semibold text-slate-800">
-                    {formatCurrency(Number(inv.amount), "PKR")}
+                    {formatPlatformCurrency(Number(inv.amount))}
                   </p>
                 </div>
               </div>

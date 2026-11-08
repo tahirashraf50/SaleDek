@@ -18,7 +18,7 @@ import {
   PLATFORM_NAME,
   sendPlatformEmail,
 } from "@/lib/platform-email";
-import { formatCurrency, slugify } from "@/lib/utils";
+import { formatPlatformCurrency, slugify } from "@/lib/utils";
 
 async function requireSuperAdmin() {
   const session = await requireSession();
@@ -457,7 +457,7 @@ function invoiceEmailBody(opts: {
     intro,
     "",
     `Invoice: ${opts.number}`,
-    `Amount: ${formatCurrency(opts.amount)}`,
+    `Amount: ${formatPlatformCurrency(opts.amount)}`,
     `Period: ${period}`,
     opts.extraNote ? `\nNote: ${opts.extraNote}` : "",
     "",
@@ -648,7 +648,7 @@ export async function markPlatformInvoicePaid(invoiceId: string) {
     invoiceId,
     type: "MARKED_PAID",
     createdById: session.user.id,
-    body: `Marked paid ${formatCurrency(Number(invoice.amount))}`,
+    body: `Marked paid ${formatPlatformCurrency(Number(invoice.amount))}`,
   });
 
   await writeAudit({

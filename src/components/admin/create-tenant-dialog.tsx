@@ -18,7 +18,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { formatCurrency } from "@/lib/utils";
+import { formatPlatformCurrency } from "@/lib/utils";
 
 type Plan = {
   key: string;
@@ -185,7 +185,7 @@ export function CreateTenantDialog({ plans }: { plans: Plan[] }) {
                 >
                   {plans.map((p) => (
                     <option key={p.key} value={p.key}>
-                      {p.name} — {formatCurrency(p.priceMonthly)}/mo
+                      {p.name} — {formatPlatformCurrency(p.priceMonthly)}/mo
                     </option>
                   ))}
                 </Select>

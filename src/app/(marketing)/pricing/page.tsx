@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { db } from "@/lib/db";
-import { formatCurrency } from "@/lib/utils";
+import { formatPlatformCurrency } from "@/lib/utils";
 
 export default async function PricingPage() {
   const plans = await db.saaSPlan.findMany({
@@ -56,9 +56,9 @@ export default async function PricingPage() {
                 )}
                 <div className="text-sm font-medium text-[var(--site-muted)]">{plan.name}</div>
                 <div className="mt-2 text-4xl font-semibold text-[var(--site-ink)]">
-                  {price === 0 ? "Free" : formatCurrency(price)}
+                  {price === 0 ? "Free" : formatPlatformCurrency(price)}
                   {price > 0 ? (
-                    <span className="text-base font-normal text-[var(--site-muted)]">/mo</span>
+                    <span className="text-base font-normal text-[var(--site-muted)]">/mo USD</span>
                   ) : null}
                 </div>
                 <p className="mt-3 text-sm leading-relaxed text-[var(--site-muted)]">

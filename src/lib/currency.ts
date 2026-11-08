@@ -23,6 +23,9 @@ const META_BY_CODE = Object.fromEntries(
   ORG_CURRENCIES.map((c) => [c.code, c])
 ) as Record<string, CurrencyMeta>;
 
+/** Platform SaaS plan / invoice currency (admin plans, public pricing). */
+export const PLATFORM_BILLING_CURRENCY = "USD";
+
 export function getCurrencyMeta(code: string | null | undefined): CurrencyMeta {
   const key = (code || "PKR").toUpperCase();
   return META_BY_CODE[key] || META_BY_CODE.PKR;

@@ -15,7 +15,7 @@ import { addYears, differenceInCalendarDays, format } from "date-fns";
 import { TenantStatus } from "@prisma/client";
 import { db } from "@/lib/db";
 import { requireSuperAdmin } from "@/lib/session";
-import { cn, formatCurrency, formatDate } from "@/lib/utils";
+import { cn, formatCurrency, formatDate, formatPlatformCurrency } from "@/lib/utils";
 import { orgLogoPublicUrl } from "@/lib/org-logo";
 import {
   setOrganizationPlan,
@@ -221,10 +221,10 @@ export default async function AdminOrgDetailPage({ params }: Props) {
             <div>
               <p className="text-sm text-slate-500">Plan MRR</p>
               <p className="mt-1 text-2xl font-bold text-teal-800">
-                {formatCurrency(mrr)}
+                {formatPlatformCurrency(mrr)}
               </p>
               <p className="mt-1 text-[11px] text-slate-400">
-                {formatCurrency(mrr * 12)} / year
+                {formatPlatformCurrency(mrr * 12)} / year
               </p>
             </div>
             <span className="flex h-10 w-10 items-center justify-center rounded-full bg-teal-100 text-teal-700">
@@ -349,7 +349,7 @@ export default async function AdminOrgDetailPage({ params }: Props) {
                   >
                     {plans.map((p) => (
                       <option key={p.id} value={p.id}>
-                        {p.name} — {formatCurrency(Number(p.priceMonthly))}/mo
+                        {p.name} — {formatPlatformCurrency(Number(p.priceMonthly))}/mo
                       </option>
                     ))}
                   </Select>

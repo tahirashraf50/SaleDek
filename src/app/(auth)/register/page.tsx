@@ -3,7 +3,7 @@ import { ArrowLeft } from "lucide-react";
 import { SaaSPlanKey } from "@prisma/client";
 import { db } from "@/lib/db";
 import { registerOrganization } from "@/server/actions/auth";
-import { formatCurrency } from "@/lib/utils";
+import { formatPlatformCurrency } from "@/lib/utils";
 import { getWebsiteSettings } from "@/lib/platform-website";
 
 export const dynamic = "force-dynamic";
@@ -31,7 +31,7 @@ export default async function RegisterPage({ searchParams }: Props) {
   const planNote = selected
     ? selected.trialDays
       ? `Plan: ${selected.name} — free ${selected.trialDays}-day demo`
-      : `Plan: ${selected.name} (${formatCurrency(Number(selected.priceMonthly))}/mo)`
+      : `Plan: ${selected.name} (${formatPlatformCurrency(Number(selected.priceMonthly))}/mo)`
     : "Multi-tenant SaaS org signup";
 
   return (
@@ -89,7 +89,7 @@ export default async function RegisterPage({ searchParams }: Props) {
                     <option key={p.id} value={p.key}>
                       {p.trialDays
                         ? `${p.name} — ${p.trialDays}-day free demo`
-                        : `${p.name} — ${formatCurrency(Number(p.priceMonthly))}/mo`}
+                        : `${p.name} — ${formatPlatformCurrency(Number(p.priceMonthly))}/mo`}
                     </option>
                   ))}
                 </select>
