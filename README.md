@@ -1,4 +1,4 @@
-# PulseCRM — Omnichannel Complaint + Sales SaaS
+# SaleDek — Omnichannel Complaint + Sales SaaS
 
 HubSpot-style multi-tenant CRM with a WhatsApp Web–like Omnichannel Inbox, Service Hub, and Sales Hub.
 

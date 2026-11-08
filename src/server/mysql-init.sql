@@ -768,7 +768,7 @@ CREATE TABLE `ChannelConnector` (
 -- CreateTable
 CREATE TABLE `PlatformWebsiteSettings` (
     `id` VARCHAR(191) NOT NULL DEFAULT 'default',
-    `brandName` VARCHAR(191) NOT NULL DEFAULT 'PulseCRM',
+    `brandName` VARCHAR(191) NOT NULL DEFAULT 'SaleDek',
     `logoPath` VARCHAR(191) NULL,
     `heroBadge` VARCHAR(191) NOT NULL DEFAULT 'CRM & SaaS',
     `heroHeadline` VARCHAR(191) NOT NULL DEFAULT 'Omnichannel complaints and sales in one workspace.',
@@ -784,7 +784,7 @@ CREATE TABLE `PlatformWebsiteSettings` (
     `sectionTitle` VARCHAR(191) NOT NULL DEFAULT 'From first message to paid order',
     `sectionBody` VARCHAR(191) NOT NULL DEFAULT 'Agents work one thread — convert to a complaint, a sale, or both without leaving the inbox.',
     `midTitle` VARCHAR(191) NOT NULL DEFAULT 'Built for the teams who answer the phone',
-    `midBody` VARCHAR(191) NOT NULL DEFAULT 'Field service, telecom, retail — wherever complaints and sales collide. PulseCRM keeps the conversation, the ticket, and the payment in sync.',
+    `midBody` VARCHAR(191) NOT NULL DEFAULT 'Field service, telecom, retail — wherever complaints and sales collide. SaleDek keeps the conversation, the ticket, and the payment in sync.',
     `analysisTitle` VARCHAR(191) NOT NULL DEFAULT 'Speed up your analysis',
     `analysisBody` VARCHAR(191) NOT NULL DEFAULT 'Expand research across your organization with customization, security, and compliance features built with enterprise in mind.',
     `analysisBullets` JSON NOT NULL,
@@ -797,7 +797,7 @@ CREATE TABLE `PlatformWebsiteSettings` (
     `contactPhone` VARCHAR(191) NOT NULL DEFAULT '(00) 99 222 99566',
     `footerBlurb` VARCHAR(191) NOT NULL DEFAULT 'Multi-tenant complaint and sales workspace — inbox, tickets, payments, shop, and portal in one platform.',
     `footerNote` VARCHAR(191) NOT NULL DEFAULT 'Built for service + sales teams',
-    `copyrightName` VARCHAR(191) NOT NULL DEFAULT 'PulseCRM',
+    `copyrightName` VARCHAR(191) NOT NULL DEFAULT 'SaleDek',
     `seoPages` JSON NOT NULL,
     `updatedAt` DATETIME(3) NOT NULL,
     `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),

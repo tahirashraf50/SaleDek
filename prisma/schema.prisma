@@ -1093,8 +1093,11 @@ model ChannelConnector {
 /// Singleton row (id = "default") for public /site marketing website.
 model PlatformWebsiteSettings {
   id                  String   @id @default("default")
-  brandName           String   @default("PulseCRM")
+  brandName           String   @default("SaleDek")
   logoPath            String?
+  /// Base64 logo bytes (persists on Hostinger without local disk)
+  logoData            String?  @db.LongText
+  logoMime            String?
   heroBadge           String   @default("CRM & SaaS")
   heroHeadline        String   @default("Omnichannel complaints and sales in one workspace.")
   heroSubtext         String   @default("WhatsApp-style inbox, tickets, payments, shop, and portal — multi-tenant SaaS for every company you onboard.")
@@ -1111,7 +1114,7 @@ model PlatformWebsiteSettings {
   sectionTitle        String   @default("From first message to paid order")
   sectionBody         String   @default("Agents work one thread — convert to a complaint, a sale, or both without leaving the inbox.")
   midTitle            String   @default("Built for the teams who answer the phone")
-  midBody             String   @default("Field service, telecom, retail — wherever complaints and sales collide. PulseCRM keeps the conversation, the ticket, and the payment in sync.")
+  midBody             String   @default("Field service, telecom, retail — wherever complaints and sales collide. SaleDek keeps the conversation, the ticket, and the payment in sync.")
   analysisTitle       String   @default("Speed up your analysis")
   analysisBody        String   @default("Expand research across your organization with customization, security, and compliance features built with enterprise in mind.")
   /// string[]
@@ -1126,7 +1129,7 @@ model PlatformWebsiteSettings {
   contactPhone        String   @default("(00) 99 222 99566")
   footerBlurb         String   @default("Multi-tenant complaint and sales workspace — inbox, tickets, payments, shop, and portal in one platform.")
   footerNote          String   @default("Built for service + sales teams")
-  copyrightName       String   @default("PulseCRM")
+  copyrightName       String   @default("SaleDek")
   /// Per-page SEO: { home|about|features|pricing|contact: { title, description, keywords } }
   seoPages            Json     @default("{}")
   updatedAt           DateTime @updatedAt

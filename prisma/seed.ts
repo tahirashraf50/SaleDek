@@ -77,7 +77,7 @@ async function main() {
       key: "DEMO",
       name: "Demo",
       priceMonthly: 0,
-      description: "15-day free sandbox to try PulseCRM end-to-end",
+      description: "15-day free sandbox to try SaleDek end-to-end",
       features: [
         "Full CRM modules",
         "Up to 3 users",

@@ -181,57 +181,70 @@ function mapRow(row: {
   footerBlurb: string;
   footerNote: string;
   copyrightName: string;
+  logoData?: string | null;
   seoPages?: unknown;
   updatedAt: Date;
 }): WebsiteSettings {
+  const brandName =
+    !row.brandName || row.brandName === "PulseCRM" ? "SaleDek" : row.brandName;
+  const copyrightName =
+    !row.copyrightName || row.copyrightName === "PulseCRM"
+      ? "SaleDek"
+      : row.copyrightName;
+  const hasLogo = Boolean(row.logoData || row.logoPath);
+  const scrub = (s: string) => s.replaceAll("PulseCRM", "SaleDek");
   return {
-    brandName: row.brandName,
+    brandName,
     logoPath: row.logoPath,
-    logoUrl: row.logoPath
+    logoUrl: hasLogo
       ? `${PLATFORM_LOGO_PUBLIC_URL}?v=${encodeURIComponent(row.updatedAt.toISOString())}`
       : null,
-    heroBadge: row.heroBadge,
-    heroHeadline: row.heroHeadline,
-    heroSubtext: row.heroSubtext,
+    heroBadge: scrub(row.heroBadge),
+    heroHeadline: scrub(row.heroHeadline),
+    heroSubtext: scrub(row.heroSubtext),
     heroCtaLabel: row.heroCtaLabel,
     heroCtaHref: row.heroCtaHref,
     heroSecondaryLabel: row.heroSecondaryLabel,
     heroSecondaryHref: row.heroSecondaryHref,
     heroStats: asHeroStats(row.heroStats, DEFAULT_STATS),
     newsTickerItems: asStringArray(row.newsTickerItems, DEFAULT_TICKER),
-    featuresTitle: row.featuresTitle,
-    featuresSubtitle: row.featuresSubtitle,
-    sectionTitle: row.sectionTitle,
-    sectionBody: row.sectionBody,
-    midTitle: row.midTitle,
-    midBody: row.midBody,
-    analysisTitle: row.analysisTitle,
-    analysisBody: row.analysisBody,
-    analysisBullets: asStringArray(row.analysisBullets, DEFAULT_BULLETS),
+    featuresTitle: scrub(row.featuresTitle),
+    featuresSubtitle: scrub(row.featuresSubtitle),
+    sectionTitle: scrub(row.sectionTitle),
+    sectionBody: scrub(row.sectionBody),
+    midTitle: scrub(row.midTitle),
+    midBody: scrub(row.midBody),
+    analysisTitle: scrub(row.analysisTitle),
+    analysisBody: scrub(row.analysisBody),
+    analysisBullets: asStringArray(row.analysisBullets, DEFAULT_BULLETS).map(scrub),
     integrations: asStringArray(row.integrations, DEFAULT_INTEGRATIONS),
-    integrationsTitle: row.integrationsTitle,
-    integrationsBody: row.integrationsBody,
-    ctaTitle: row.ctaTitle,
-    ctaBody: row.ctaBody,
+    integrationsTitle: scrub(row.integrationsTitle),
+    integrationsBody: scrub(row.integrationsBody),
+    ctaTitle: scrub(row.ctaTitle),
+    ctaBody: scrub(row.ctaBody),
     contactEmail: row.contactEmail,
     contactPhone: row.contactPhone,
-    footerBlurb: row.footerBlurb,
-    footerNote: row.footerNote,
-    copyrightName: row.copyrightName,
+    footerBlurb: scrub(row.footerBlurb),
+    footerNote: scrub(row.footerNote),
+    copyrightName,
     seoPages: asSeoPages(row.seoPages),
   };
 }
 
-/** Ensure seoPages column exists on Hostinger (when prisma/ migrations are missing). */
-async function ensureSeoColumn() {
-  try {
-    await db.$executeRawUnsafe(
-      "ALTER TABLE `PlatformWebsiteSettings` ADD COLUMN `seoPages` JSON NOT NULL DEFAULT ('{}')",
-    );
-  } catch (err) {
-    const message = err instanceof Error ? err.message : String(err);
-    if (!/Duplicate column|already exists/i.test(message)) {
-      // ignore — column may already exist or table missing (fallback path)
+async function ensureWebsiteColumns() {
+  const alters = [
+    "ALTER TABLE `PlatformWebsiteSettings` ADD COLUMN `seoPages` JSON NOT NULL DEFAULT ('{}')",
+    "ALTER TABLE `PlatformWebsiteSettings` ADD COLUMN `logoData` LONGTEXT NULL",
+    "ALTER TABLE `PlatformWebsiteSettings` ADD COLUMN `logoMime` VARCHAR(191) NULL",
+  ];
+  for (const sql of alters) {
+    try {
+      await db.$executeRawUnsafe(sql);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      if (!/Duplicate column|already exists/i.test(message)) {
+        // ignore — table may be missing (fallback path)
+      }
     }
   }
 }
@@ -240,14 +253,30 @@ export async function getWebsiteSettings(): Promise<WebsiteSettings> {
   try {
     const row = await db.platformWebsiteSettings.upsert({
       where: { id: "default" },
-      create: { id: "default", seoPages: DEFAULT_SEO_PAGES },
+      create: {
+        id: "default",
+        brandName: "SaleDek",
+        copyrightName: "SaleDek",
+        seoPages: DEFAULT_SEO_PAGES,
+      },
       update: {},
     });
+    // One-time rename leftover PulseCRM defaults in DB
+    if (row.brandName === "PulseCRM" || row.copyrightName === "PulseCRM") {
+      await db.platformWebsiteSettings.update({
+        where: { id: "default" },
+        data: {
+          brandName: row.brandName === "PulseCRM" ? "SaleDek" : row.brandName,
+          copyrightName:
+            row.copyrightName === "PulseCRM" ? "SaleDek" : row.copyrightName,
+        },
+      });
+    }
     return mapRow(row);
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
-    if (/seoPages|Unknown column/i.test(message)) {
-      await ensureSeoColumn();
+    if (/seoPages|logoData|logoMime|Unknown column/i.test(message)) {
+      await ensureWebsiteColumns();
       try {
         const row = await db.platformWebsiteSettings.upsert({
           where: { id: "default" },

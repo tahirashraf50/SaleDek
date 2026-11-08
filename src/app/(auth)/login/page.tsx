@@ -90,17 +90,19 @@ export default async function LoginPage() {
               // eslint-disable-next-line @next/next/no-img-element
               <img
                 src={site.logoUrl}
-                alt=""
-                className="h-9 w-auto rounded-md object-contain"
+                alt={site.brandName}
+                className="h-9 w-auto max-w-[160px] object-contain"
               />
             ) : (
-              <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-[var(--site-purple)] text-sm font-bold text-white">
-                {site.brandName.slice(0, 1)}
-              </span>
+              <>
+                <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-[var(--site-purple)] text-sm font-bold text-white">
+                  {site.brandName.slice(0, 1)}
+                </span>
+                <span className="text-lg font-semibold tracking-tight text-[var(--site-ink)]">
+                  {site.brandName}
+                </span>
+              </>
             )}
-            <span className="text-lg font-semibold tracking-tight text-[var(--site-ink)]">
-              {site.brandName}
-            </span>
           </Link>
           <Link
             href="/"

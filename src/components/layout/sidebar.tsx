@@ -166,7 +166,7 @@ export function Sidebar({
           </div>
           <div className="min-w-0">
             <div className="truncate text-[15px] font-semibold tracking-tight text-slate-900">
-              PulseCRM
+              SaleDek
             </div>
             <div className="truncate text-[11px] text-slate-500">
               {isDept ? "Department portal" : orgName || "Workspace"}

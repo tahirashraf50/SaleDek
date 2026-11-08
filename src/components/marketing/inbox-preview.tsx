@@ -48,7 +48,7 @@ export function InboxPreview() {
           <span className="h-2.5 w-2.5 rounded-full bg-[#febc2e]" />
           <span className="h-2.5 w-2.5 rounded-full bg-[#28c840]" />
           <div className="ml-3 flex-1 truncate rounded-md bg-white px-3 py-1 text-center text-[11px] text-slate-400 ring-1 ring-slate-200/80">
-            app.pulsecrm.com/inbox
+            app.saledek.com/inbox
           </div>
         </div>
 

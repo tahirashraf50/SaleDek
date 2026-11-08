@@ -31,7 +31,7 @@ export default async function ShopPage({ params }: Props) {
               Support portal
             </Link>
             <Link href="/" className="text-slate-500 hover:underline">
-              PulseCRM
+              SaleDek
             </Link>
           </div>
         </div>

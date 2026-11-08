@@ -54,7 +54,7 @@ export function buildPolicyPdfBuffer(input: PolicyPdfInput): Promise<Buffer> {
     doc.on("end", () => resolve(Buffer.concat(chunks)));
     doc.on("error", reject);
 
-    const brand = input.orgName || "PulseCRM";
+    const brand = input.orgName || "SaleDek";
 
     doc
       .fontSize(18)

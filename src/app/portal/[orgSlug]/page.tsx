@@ -6,7 +6,7 @@ import { PortalClient } from "@/components/portal/portal-client";
 
 export const dynamic = "force-dynamic";
 
-const PLATFORM_NAME = process.env.NEXT_PUBLIC_PLATFORM_NAME || "PulseCRM";
+const PLATFORM_NAME = process.env.NEXT_PUBLIC_PLATFORM_NAME || "SaleDek";
 
 type Props = { params: Promise<{ orgSlug: string }> };
 

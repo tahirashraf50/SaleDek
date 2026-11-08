@@ -50,13 +50,19 @@ export function SiteNav({
         >
           {logoUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={logoUrl} alt="" className="h-8 w-auto object-contain" />
+            <img
+              src={logoUrl}
+              alt={brandName}
+              className="h-9 w-auto max-w-[160px] object-contain"
+            />
           ) : (
-            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-[var(--site-purple)] text-sm font-bold text-white">
-              {brandName.slice(0, 1)}
-            </span>
+            <>
+              <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-[var(--site-purple)] text-sm font-bold text-white">
+                {brandName.slice(0, 1)}
+              </span>
+              {brandName}
+            </>
           )}
-          {brandName}
         </Link>
 
         <nav className="hidden items-center gap-1 text-sm font-medium text-[var(--site-muted)] lg:flex">

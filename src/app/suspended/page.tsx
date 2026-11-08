@@ -13,10 +13,10 @@ export default function SuspendedPage() {
         <CardContent className="space-y-3 text-sm text-slate-600">
           <p>
             This tenant is suspended by the platform administrator. Contact support or your
-            PulseCRM account manager.
+            SaleDek account manager.
           </p>
           <Link href="/" className="text-teal-700 hover:underline">
-            Back to PulseCRM website
+            Back to SaleDek website
           </Link>
         </CardContent>
       </Card>

@@ -127,6 +127,10 @@ export function WebsiteSettingsForm({ initial }: { initial: Settings }) {
         if (fileRef.current) fileRef.current.value = "";
         if (preview) URL.revokeObjectURL(preview);
         setPreview(null);
+        set(
+          "logoUrl",
+          `/api/platform-logo?v=${encodeURIComponent(new Date().toISOString())}`,
+        );
         router.refresh();
       } catch (err) {
         toast.error(err instanceof Error ? err.message : "Upload failed");

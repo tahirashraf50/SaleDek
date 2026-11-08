@@ -30,15 +30,17 @@ export default async function SiteLayout({
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
                   src={site.logoUrl}
-                  alt=""
-                  className="h-9 w-auto rounded-md bg-white/10 object-contain p-1"
+                  alt={site.brandName}
+                  className="h-10 w-auto max-w-[180px] rounded-md bg-white/10 object-contain p-1"
                 />
               ) : (
-                <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-[var(--site-purple)] text-sm font-bold">
-                  {site.brandName.slice(0, 1)}
-                </span>
+                <>
+                  <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-[var(--site-purple)] text-sm font-bold">
+                    {site.brandName.slice(0, 1)}
+                  </span>
+                  <p className="text-xl font-semibold">{site.brandName}</p>
+                </>
               )}
-              <p className="text-xl font-semibold">{site.brandName}</p>
             </div>
             <p className="mt-4 max-w-sm text-sm leading-relaxed text-white/55">
               {site.footerBlurb}

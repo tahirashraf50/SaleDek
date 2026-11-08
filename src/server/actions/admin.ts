@@ -757,7 +757,7 @@ export async function updateWebsiteSettings(data: {
   };
 }) {
   await requireSuperAdmin();
-  const brandName = data.brandName.trim() || "PulseCRM";
+  const brandName = data.brandName.trim() || "SaleDek";
   const heroStats = data.heroStats
     .map((s) => ({
       value: String(s.value || "").trim(),
@@ -866,22 +866,46 @@ export async function updateWebsiteSettings(data: {
 export async function updateWebsiteLogo(logo: File) {
   await requireSuperAdmin();
   const { storePlatformLogo } = await import("@/lib/platform-logo-server");
-  const logoPath = await storePlatformLogo(logo);
-  await db.platformWebsiteSettings.upsert({
-    where: { id: "default" },
-    create: { id: "default", logoPath },
-    update: { logoPath },
-  });
+  const stored = await storePlatformLogo(logo);
+  const data = {
+    logoPath: stored.logoPath,
+    logoData: stored.logoData,
+    logoMime: stored.logoMime,
+  };
+  try {
+    await db.platformWebsiteSettings.upsert({
+      where: { id: "default" },
+      create: { id: "default", ...data },
+      update: data,
+    });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    if (/logoData|logoMime|Unknown column/i.test(message)) {
+      await db.$executeRawUnsafe(
+        "ALTER TABLE `PlatformWebsiteSettings` ADD COLUMN `logoData` LONGTEXT NULL",
+      );
+      await db.$executeRawUnsafe(
+        "ALTER TABLE `PlatformWebsiteSettings` ADD COLUMN `logoMime` VARCHAR(191) NULL",
+      );
+      await db.platformWebsiteSettings.upsert({
+        where: { id: "default" },
+        create: { id: "default", ...data },
+        update: data,
+      });
+    } else {
+      throw err;
+    }
+  }
   revalidateWebsite();
-  return { logoPath };
+  return { logoPath: stored.logoPath };
 }
 
 export async function clearWebsiteLogo() {
   await requireSuperAdmin();
   await db.platformWebsiteSettings.upsert({
     where: { id: "default" },
-    create: { id: "default", logoPath: null },
-    update: { logoPath: null },
+    create: { id: "default", logoPath: null, logoData: null, logoMime: null },
+    update: { logoPath: null, logoData: null, logoMime: null },
   });
   revalidateWebsite();
 }

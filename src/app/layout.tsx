@@ -14,10 +14,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "PulseCRM — Complaint & Sales",
-  description: "Omnichannel complaint management and sales CRM",
+  title: "SaleDek — CRM & Sales",
+  description: "Omnichannel CRM for complaints, sales, and customer success",
 };
-
 export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {

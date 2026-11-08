@@ -42,7 +42,7 @@ export async function notifyDepartmentOfTicket(params: {
       : {};
 
   const deptName = ticket.department?.name || "Department";
-  const subject = `[PulseCRM] Ticket #${ticket.number} → ${deptName}`;
+  const subject = `[SaleDek] Ticket #${ticket.number} → ${deptName}`;
   const body = [
     `A complaint was forwarded to ${deptName}.`,
     "",

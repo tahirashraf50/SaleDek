@@ -13,11 +13,28 @@ const MIME: Record<string, string> = {
   ".gif": "image/gif",
 };
 
+export const dynamic = "force-dynamic";
+
 export async function GET() {
   const settings = await db.platformWebsiteSettings.findUnique({
     where: { id: "default" },
-    select: { logoPath: true },
+    select: { logoPath: true, logoData: true, logoMime: true },
   });
+
+  if (settings?.logoData) {
+    try {
+      const buf = Buffer.from(settings.logoData, "base64");
+      return new NextResponse(buf, {
+        headers: {
+          "Content-Type": settings.logoMime || "image/png",
+          "Cache-Control": "public, max-age=3600",
+        },
+      });
+    } catch {
+      // fall through to disk
+    }
+  }
+
   if (!settings?.logoPath) {
     return NextResponse.json({ error: "No logo" }, { status: 404 });
   }

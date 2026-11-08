@@ -91,7 +91,7 @@ export async function seedDefaultQuickReplies() {
     {
       title: "Greeting",
       shortcut: "/hi",
-      body: "Assalam o Alaikum! PulseCRM support se baat kar rahe hain. Aapki madad kaise kar sakte hain?",
+      body: "Assalam o Alaikum! SaleDek support se baat kar rahe hain. Aapki madad kaise kar sakte hain?",
       channel: "WHATSAPP" as OmniChannel,
     },
     {

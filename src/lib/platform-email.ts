@@ -28,4 +28,4 @@ export async function sendPlatformEmail(
   return sendEmailMessage(platformEmailConfig(), to, subject, body);
 }
 
-export const PLATFORM_NAME = process.env.NEXT_PUBLIC_PLATFORM_NAME || "PulseCRM";
+export const PLATFORM_NAME = process.env.NEXT_PUBLIC_PLATFORM_NAME || "SaleDek";

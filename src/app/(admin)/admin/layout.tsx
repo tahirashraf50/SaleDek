@@ -27,7 +27,7 @@ export default async function AdminLayout({
                 Platform
               </p>
               <p className="text-sm font-bold tracking-tight text-slate-900">
-                PulseCRM Admin
+                SaleDek Admin
               </p>
             </div>
           </div>
