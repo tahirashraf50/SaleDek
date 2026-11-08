@@ -8,10 +8,10 @@ const nextConfig: NextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
   experimental: {
+    // Hostinger shared builders: limit Next worker pool
+    cpus: 2,
+    workerThreads: false,
     // Policy PDFs often exceed the default 1MB Server Action body limit
     serverActions: {
       bodySizeLimit: "15mb",
