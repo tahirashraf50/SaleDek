@@ -49,3 +49,4 @@ uploads/
 .claude/
 .cursor/
 .devin/
+.db-bootstrap.log

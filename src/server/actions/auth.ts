@@ -125,9 +125,29 @@ export async function loginAction(
     if (user?.role === "SUPER_ADMIN") redirectTo = "/admin";
   } catch (err) {
     console.error("[loginAction] database error:", err);
+    const code =
+      err && typeof err === "object" && "code" in err
+        ? String((err as { code: unknown }).code)
+        : "";
+    if (code === "P1001") {
+      return {
+        error:
+          "Cannot reach MySQL (P1001). Set DATABASE_URL host to 127.0.0.1 on Hostinger.",
+      };
+    }
+    if (code === "P1000" || code === "P1010") {
+      return {
+        error:
+          "MySQL login failed (bad user/password). Encode @ in password as %40.",
+      };
+    }
+    if (code === "P2021") {
+      return {
+        error: "Database tables missing (P2021). Redeploy so migrations can run.",
+      };
+    }
     return {
-      error:
-        "Database is not ready yet. Wait for migrations/seed to finish, then try again.",
+      error: `Database is not ready${code ? ` (${code})` : ""}. Open /api/health then redeploy.`,
     };
   }
 
