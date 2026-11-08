@@ -1,5 +1,12 @@
 import Link from "next/link";
-import { getWebsiteSettings } from "@/lib/platform-website";
+import {
+  buildMarketingMetadata,
+  getWebsiteSettings,
+} from "@/lib/platform-website";
+
+export async function generateMetadata() {
+  return buildMarketingMetadata("about");
+}
 
 export default async function AboutPage() {
   const site = await getWebsiteSettings();

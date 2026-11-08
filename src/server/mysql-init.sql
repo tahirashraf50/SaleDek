@@ -798,6 +798,7 @@ CREATE TABLE `PlatformWebsiteSettings` (
     `footerBlurb` VARCHAR(191) NOT NULL DEFAULT 'Multi-tenant complaint and sales workspace — inbox, tickets, payments, shop, and portal in one platform.',
     `footerNote` VARCHAR(191) NOT NULL DEFAULT 'Built for service + sales teams',
     `copyrightName` VARCHAR(191) NOT NULL DEFAULT 'PulseCRM',
+    `seoPages` JSON NOT NULL,
     `updatedAt` DATETIME(3) NOT NULL,
     `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
 

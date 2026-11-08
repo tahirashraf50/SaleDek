@@ -20,7 +20,7 @@ export default async function AdminWebsiteSettingsPage() {
             Website settings
           </h1>
           <p className="mt-1 text-sm text-slate-500">
-            Logo, hero, sections, contact & footer for{" "}
+            Logo, hero, sections, SEO, contact & footer for{" "}
             <span className="font-medium text-slate-700">saledek.com</span>
           </p>
         </div>
@@ -65,6 +65,7 @@ export default async function AdminWebsiteSettingsPage() {
           footerBlurb: settings.footerBlurb,
           footerNote: settings.footerNote,
           copyrightName: settings.copyrightName,
+          seoPages: settings.seoPages,
         }}
       />
     </div>

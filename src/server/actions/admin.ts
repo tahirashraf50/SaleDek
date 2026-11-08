@@ -748,6 +748,13 @@ export async function updateWebsiteSettings(data: {
   footerBlurb: string;
   footerNote: string;
   copyrightName: string;
+  seoPages: {
+    home: { title: string; description: string; keywords: string };
+    about: { title: string; description: string; keywords: string };
+    features: { title: string; description: string; keywords: string };
+    pricing: { title: string; description: string; keywords: string };
+    contact: { title: string; description: string; keywords: string };
+  };
 }) {
   await requireSuperAdmin();
   const brandName = data.brandName.trim() || "PulseCRM";
@@ -770,6 +777,34 @@ export async function updateWebsiteSettings(data: {
     .map((s) => s.trim())
     .filter(Boolean)
     .slice(0, 16);
+
+  const seoPages = {
+    home: {
+      title: data.seoPages.home.title.trim(),
+      description: data.seoPages.home.description.trim(),
+      keywords: data.seoPages.home.keywords.trim(),
+    },
+    about: {
+      title: data.seoPages.about.title.trim(),
+      description: data.seoPages.about.description.trim(),
+      keywords: data.seoPages.about.keywords.trim(),
+    },
+    features: {
+      title: data.seoPages.features.title.trim(),
+      description: data.seoPages.features.description.trim(),
+      keywords: data.seoPages.features.keywords.trim(),
+    },
+    pricing: {
+      title: data.seoPages.pricing.title.trim(),
+      description: data.seoPages.pricing.description.trim(),
+      keywords: data.seoPages.pricing.keywords.trim(),
+    },
+    contact: {
+      title: data.seoPages.contact.title.trim(),
+      description: data.seoPages.contact.description.trim(),
+      keywords: data.seoPages.contact.keywords.trim(),
+    },
+  };
 
   const payload = {
     brandName,
@@ -801,13 +836,30 @@ export async function updateWebsiteSettings(data: {
     footerBlurb: data.footerBlurb.trim(),
     footerNote: data.footerNote.trim(),
     copyrightName: data.copyrightName.trim() || brandName,
+    seoPages,
   };
 
-  await db.platformWebsiteSettings.upsert({
-    where: { id: "default" },
-    create: { id: "default", ...payload },
-    update: payload,
-  });
+  try {
+    await db.platformWebsiteSettings.upsert({
+      where: { id: "default" },
+      create: { id: "default", ...payload },
+      update: payload,
+    });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    if (/seoPages|Unknown column/i.test(message)) {
+      await db.$executeRawUnsafe(
+        "ALTER TABLE `PlatformWebsiteSettings` ADD COLUMN `seoPages` JSON NOT NULL DEFAULT ('{}')",
+      );
+      await db.platformWebsiteSettings.upsert({
+        where: { id: "default" },
+        create: { id: "default", ...payload },
+        update: payload,
+      });
+    } else {
+      throw err;
+    }
+  }
   revalidateWebsite();
 }
 

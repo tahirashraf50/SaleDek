@@ -1,6 +1,11 @@
 import Link from "next/link";
 import { db } from "@/lib/db";
+import { buildMarketingMetadata } from "@/lib/platform-website";
 import { formatPlatformCurrency } from "@/lib/utils";
+
+export async function generateMetadata() {
+  return buildMarketingMetadata("pricing");
+}
 
 export default async function PricingPage() {
   const plans = await db.saaSPlan.findMany({

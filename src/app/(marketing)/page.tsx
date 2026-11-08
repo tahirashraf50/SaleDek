@@ -12,9 +12,16 @@ import {
   Workflow,
 } from "lucide-react";
 import { auth } from "@/lib/auth";
-import { getWebsiteSettings } from "@/lib/platform-website";
+import {
+  buildMarketingMetadata,
+  getWebsiteSettings,
+} from "@/lib/platform-website";
 import { HeroShowcase } from "@/components/marketing/hero-showcase";
 import { ReportsShowcase } from "@/components/marketing/reports-showcase";
+
+export async function generateMetadata() {
+  return buildMarketingMetadata("home");
+}
 
 const ANALYSIS_IMG =
   "https://themewant.com/products/wordpress/saafiy/crm/wp-content/uploads/sites/2/2024/10/group_1000005169-1-768x656-1.webp";

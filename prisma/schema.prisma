@@ -1127,6 +1127,8 @@ model PlatformWebsiteSettings {
   footerBlurb         String   @default("Multi-tenant complaint and sales workspace — inbox, tickets, payments, shop, and portal in one platform.")
   footerNote          String   @default("Built for service + sales teams")
   copyrightName       String   @default("PulseCRM")
+  /// Per-page SEO: { home|about|features|pricing|contact: { title, description, keywords } }
+  seoPages            Json     @default("{}")
   updatedAt           DateTime @updatedAt
   createdAt           DateTime @default(now())
 }

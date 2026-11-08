@@ -1,4 +1,20 @@
+import type { Metadata } from "next";
 import { db } from "@/lib/db";
+import {
+  asSeoPages,
+  DEFAULT_SEO_PAGES,
+  type SeoPageKey,
+  type SeoPages,
+} from "@/lib/website-seo";
+
+export {
+  SEO_PAGE_META,
+  DEFAULT_SEO_PAGES,
+  asSeoPages,
+  type SeoPageKey,
+  type PageSeo,
+  type SeoPages,
+} from "@/lib/website-seo";
 
 export const PLATFORM_LOGO_PUBLIC_URL = "/api/platform-logo";
 
@@ -36,6 +52,7 @@ export type WebsiteSettings = {
   footerBlurb: string;
   footerNote: string;
   copyrightName: string;
+  seoPages: SeoPages;
 };
 
 function asStringArray(value: unknown, fallback: string[]): string[] {
@@ -130,6 +147,7 @@ const FALLBACK: WebsiteSettings = {
     "The only business management tool that combines CRM, time tracking, project management, invoicing and payments.",
   footerNote: "Built for service + sales teams",
   copyrightName: "SaleDek",
+  seoPages: DEFAULT_SEO_PAGES,
 };
 
 function mapRow(row: {
@@ -163,6 +181,7 @@ function mapRow(row: {
   footerBlurb: string;
   footerNote: string;
   copyrightName: string;
+  seoPages?: unknown;
   updatedAt: Date;
 }): WebsiteSettings {
   return {
@@ -199,19 +218,74 @@ function mapRow(row: {
     footerBlurb: row.footerBlurb,
     footerNote: row.footerNote,
     copyrightName: row.copyrightName,
+    seoPages: asSeoPages(row.seoPages),
   };
+}
+
+/** Ensure seoPages column exists on Hostinger (when prisma/ migrations are missing). */
+async function ensureSeoColumn() {
+  try {
+    await db.$executeRawUnsafe(
+      "ALTER TABLE `PlatformWebsiteSettings` ADD COLUMN `seoPages` JSON NOT NULL DEFAULT ('{}')",
+    );
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    if (!/Duplicate column|already exists/i.test(message)) {
+      // ignore — column may already exist or table missing (fallback path)
+    }
+  }
 }
 
 export async function getWebsiteSettings(): Promise<WebsiteSettings> {
   try {
     const row = await db.platformWebsiteSettings.upsert({
       where: { id: "default" },
-      create: { id: "default" },
+      create: { id: "default", seoPages: DEFAULT_SEO_PAGES },
       update: {},
     });
     return mapRow(row);
   } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    if (/seoPages|Unknown column/i.test(message)) {
+      await ensureSeoColumn();
+      try {
+        const row = await db.platformWebsiteSettings.upsert({
+          where: { id: "default" },
+          create: { id: "default", seoPages: DEFAULT_SEO_PAGES },
+          update: {},
+        });
+        return mapRow(row);
+      } catch (retryErr) {
+        console.error("[getWebsiteSettings] retry failed:", retryErr);
+      }
+    }
     console.error("[getWebsiteSettings] DB unavailable, using fallback:", err);
     return FALLBACK;
   }
+}
+
+export async function buildMarketingMetadata(page: SeoPageKey): Promise<Metadata> {
+  const site = await getWebsiteSettings();
+  const seo = site.seoPages[page];
+  const keywords = seo.keywords
+    .split(",")
+    .map((k) => k.trim())
+    .filter(Boolean);
+
+  return {
+    title: seo.title,
+    description: seo.description,
+    keywords: keywords.length ? keywords : undefined,
+    openGraph: {
+      title: seo.title,
+      description: seo.description,
+      siteName: site.brandName,
+      type: "website",
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: seo.title,
+      description: seo.description,
+    },
+  };
 }

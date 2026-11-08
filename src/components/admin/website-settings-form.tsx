@@ -9,6 +9,12 @@ import {
   updateWebsiteLogo,
   updateWebsiteSettings,
 } from "@/server/actions/admin";
+import {
+  SEO_PAGE_META,
+  type PageSeo,
+  type SeoPageKey,
+  type SeoPages,
+} from "@/lib/website-seo";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -46,6 +52,7 @@ type Settings = {
   footerBlurb: string;
   footerNote: string;
   copyrightName: string;
+  seoPages: SeoPages;
 };
 
 function linesToList(text: string) {
@@ -89,6 +96,16 @@ export function WebsiteSettingsForm({ initial }: { initial: Settings }) {
     setForm((prev) => ({
       ...prev,
       heroStats: prev.heroStats.filter((_, idx) => idx !== i),
+    }));
+  }
+
+  function setSeo(page: SeoPageKey, key: keyof PageSeo, value: string) {
+    setForm((prev) => ({
+      ...prev,
+      seoPages: {
+        ...prev.seoPages,
+        [page]: { ...prev.seoPages[page], [key]: value },
+      },
     }));
   }
 
@@ -162,6 +179,7 @@ export function WebsiteSettingsForm({ initial }: { initial: Settings }) {
           footerBlurb: form.footerBlurb,
           footerNote: form.footerNote,
           copyrightName: form.copyrightName,
+          seoPages: form.seoPages,
         });
         toast.success("Website content saved");
         router.refresh();
@@ -507,6 +525,61 @@ export function WebsiteSettingsForm({ initial }: { initial: Settings }) {
               disabled={pending}
             />
           </div>
+        </div>
+      </div>
+
+      <div className="overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-[0_4px_20px_rgba(15,23,42,0.04)]">
+        <div className="border-b border-slate-100 bg-gradient-to-br from-violet-50/80 to-transparent px-5 py-4">
+          <h2 className="text-base font-semibold text-slate-900">Page SEO</h2>
+          <p className="text-[11px] text-slate-500">
+            Title, meta description, and keywords for Home, About, Features, Pricing, and Contact
+          </p>
+        </div>
+        <div className="space-y-5 p-5">
+          {SEO_PAGE_META.map((page) => (
+            <div
+              key={page.key}
+              className="rounded-2xl border border-slate-100 bg-slate-50/50 p-4"
+            >
+              <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+                <p className="text-sm font-semibold text-slate-900">{page.label}</p>
+                <span className="font-mono text-[11px] text-slate-400">{page.path}</span>
+              </div>
+              <div className="grid gap-3 md:grid-cols-2">
+                <div className="md:col-span-2">
+                  <Label>Meta title</Label>
+                  <Input
+                    value={form.seoPages[page.key].title}
+                    onChange={(e) => setSeo(page.key, "title", e.target.value)}
+                    className="mt-1"
+                    disabled={pending}
+                    maxLength={70}
+                  />
+                </div>
+                <div className="md:col-span-2">
+                  <Label>Meta description</Label>
+                  <Textarea
+                    value={form.seoPages[page.key].description}
+                    onChange={(e) => setSeo(page.key, "description", e.target.value)}
+                    rows={2}
+                    className="mt-1 resize-none"
+                    disabled={pending}
+                    maxLength={180}
+                  />
+                </div>
+                <div className="md:col-span-2">
+                  <Label>Keywords (comma separated)</Label>
+                  <Input
+                    value={form.seoPages[page.key].keywords}
+                    onChange={(e) => setSeo(page.key, "keywords", e.target.value)}
+                    className="mt-1"
+                    disabled={pending}
+                    placeholder="CRM, sales, SaleDek"
+                  />
+                </div>
+              </div>
+            </div>
+          ))}
         </div>
       </div>
 

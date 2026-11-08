@@ -1,5 +1,12 @@
 import { Mail, Phone } from "lucide-react";
-import { getWebsiteSettings } from "@/lib/platform-website";
+import {
+  buildMarketingMetadata,
+  getWebsiteSettings,
+} from "@/lib/platform-website";
+
+export async function generateMetadata() {
+  return buildMarketingMetadata("contact");
+}
 
 export default async function ContactPage() {
   const site = await getWebsiteSettings();

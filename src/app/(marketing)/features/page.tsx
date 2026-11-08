@@ -7,6 +7,11 @@ import {
   Users,
   Workflow,
 } from "lucide-react";
+import { buildMarketingMetadata } from "@/lib/platform-website";
+
+export async function generateMetadata() {
+  return buildMarketingMetadata("features");
+}
 
 const FEATURES = [
   {
