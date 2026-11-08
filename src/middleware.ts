@@ -23,6 +23,7 @@ export async function middleware(req: NextRequest) {
     path.startsWith("/suspended") ||
     path.startsWith("/api/auth") ||
     path.startsWith("/api/health") ||
+    path.startsWith("/api/setup-db") ||
     path.startsWith("/api/org-logo") ||
     path.startsWith("/api/platform-logo") ||
     path.startsWith("/api/webhooks/");

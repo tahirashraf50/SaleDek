@@ -72,7 +72,8 @@ export async function GET() {
         "MySQL login failed. Check user/password; encode @ in password as %40.";
     } else if (code === "P2021" || /does not exist|Unknown table/i.test(message)) {
       body.hint =
-        "Tables missing. Redeploy so start script runs migrate/db push.";
+        "Tables missing. Redeploy, then open /api/setup-db?key=YOUR_AUTH_SECRET once.";
+      body.setupPath = "/api/setup-db?key=YOUR_AUTH_SECRET";
     } else {
       body.hint = "See Hostinger app logs for [db-bootstrap] lines.";
     }
