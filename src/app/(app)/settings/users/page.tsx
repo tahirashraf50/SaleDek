@@ -95,8 +95,8 @@ export default async function SettingsUsersPage({ searchParams }: Props) {
           ...(query
             ? {
                 OR: [
-                  { name: { contains: query, mode: "insensitive" as const } },
-                  { email: { contains: query, mode: "insensitive" as const } },
+                  { name: { contains: query } },
+                  { email: { contains: query } },
                 ],
               }
             : {}),

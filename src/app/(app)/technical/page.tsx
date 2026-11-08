@@ -50,8 +50,8 @@ export default async function TechnicalQueuePage() {
             organizationId: orgId,
             stage: { isTerminal: false },
             OR: [
-              { type: { name: { equals: "Product", mode: "insensitive" } } },
-              { subject: { contains: "technical", mode: "insensitive" } },
+              { type: { name: { equals: "Product" } } },
+              { subject: { contains: "technical" } },
             ],
             NOT: { departmentId: deptId },
           },

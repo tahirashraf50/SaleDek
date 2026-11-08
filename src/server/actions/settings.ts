@@ -70,7 +70,7 @@ export async function createDepartment(name: string, description?: string) {
   const clash = await db.department.findFirst({
     where: {
       organizationId: session.organizationId,
-      name: { equals: trimmed, mode: "insensitive" },
+      name: { equals: trimmed },
     },
   });
   if (clash) throw new Error("A department with this name already exists");
@@ -102,7 +102,7 @@ export async function updateDepartment(
   const clash = await db.department.findFirst({
     where: {
       organizationId: session.organizationId,
-      name: { equals: trimmed, mode: "insensitive" },
+      name: { equals: trimmed },
       NOT: { id: departmentId },
     },
   });

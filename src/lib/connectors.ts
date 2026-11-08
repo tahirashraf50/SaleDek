@@ -38,10 +38,10 @@ export async function ingestInboundMessage(
       OR: [
         payload.customerPhone ? { phone: payload.customerPhone } : undefined,
         payload.customerEmail
-          ? { email: { equals: payload.customerEmail, mode: "insensitive" } }
+          ? { email: { equals: payload.customerEmail } }
           : undefined,
         { phone: payload.externalRef },
-        { email: { equals: payload.externalRef, mode: "insensitive" } },
+        { email: { equals: payload.externalRef } },
       ].filter(Boolean) as object[],
     },
   });

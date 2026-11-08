@@ -104,12 +104,11 @@ export default async function UnderwritingQueuePage({ searchParams }: Props) {
                 {
                   policyNumber: {
                     contains: query,
-                    mode: "insensitive" as const,
                   },
                 },
                 {
                   customer: {
-                    name: { contains: query, mode: "insensitive" as const },
+                    name: { contains: query },
                   },
                 },
                 Number.isFinite(Number(query))

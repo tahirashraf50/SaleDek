@@ -90,10 +90,10 @@ export default async function SettingsSlaPage({ searchParams }: Props) {
         ...(query
           ? {
               OR: [
-                { name: { contains: query, mode: "insensitive" as const } },
+                { name: { contains: query } },
                 {
                   ticketType: {
-                    name: { contains: query, mode: "insensitive" as const },
+                    name: { contains: query },
                   },
                 },
               ],

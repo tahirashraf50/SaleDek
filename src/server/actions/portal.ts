@@ -24,7 +24,7 @@ export async function portalSubmitComplaint(input: {
         organizationId: org.id,
         OR: [
           input.phone ? { phone: input.phone } : undefined,
-          input.email ? { email: { equals: input.email, mode: "insensitive" } } : undefined,
+          input.email ? { email: { equals: input.email } } : undefined,
         ].filter(Boolean) as object[],
       },
     });
@@ -139,7 +139,7 @@ export async function portalTrackTicket(orgSlug: string, ticketNumber: number, c
       customer: {
         OR: [
           { phone: contact },
-          { email: { equals: contact, mode: "insensitive" } },
+          { email: { equals: contact } },
         ],
       },
     },

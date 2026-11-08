@@ -136,7 +136,7 @@ export default async function SettingsAutomationsPage({ searchParams }: Props) {
           ...(statusFilter === "inactive" ? { active: false } : {}),
           ...(query
             ? {
-                name: { contains: query, mode: "insensitive" as const },
+                name: { contains: query },
               }
             : {}),
         },

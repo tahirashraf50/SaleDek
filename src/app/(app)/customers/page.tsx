@@ -55,11 +55,11 @@ export default async function CustomersPage({ searchParams }: Props) {
     ...(query
       ? {
           OR: [
-            { name: { contains: query, mode: "insensitive" as const } },
-            { email: { contains: query, mode: "insensitive" as const } },
-            { phone: { contains: query, mode: "insensitive" as const } },
-            { cnic: { contains: query, mode: "insensitive" as const } },
-            { city: { contains: query, mode: "insensitive" as const } },
+            { name: { contains: query } },
+            { email: { contains: query } },
+            { phone: { contains: query } },
+            { cnic: { contains: query } },
+            { city: { contains: query } },
           ],
         }
       : {}),

@@ -56,8 +56,8 @@ export default async function SettingsCustomFieldsPage({ searchParams }: Props) 
         ...(query
           ? {
               OR: [
-                { name: { contains: query, mode: "insensitive" as const } },
-                { key: { contains: query, mode: "insensitive" as const } },
+                { name: { contains: query } },
+                { key: { contains: query } },
               ],
             }
           : {}),

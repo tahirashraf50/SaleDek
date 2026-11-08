@@ -23,9 +23,9 @@ export async function GET(req: NextRequest) {
       where: {
         organizationId,
         OR: [
-          { name: { contains: q, mode: "insensitive" } },
+          { name: { contains: q } },
           { phone: { contains: q } },
-          { email: { contains: q, mode: "insensitive" } },
+          { email: { contains: q } },
         ],
       },
       select: { id: true, name: true, phone: true },
@@ -35,7 +35,7 @@ export async function GET(req: NextRequest) {
       where: {
         organizationId,
         OR: [
-          { subject: { contains: q, mode: "insensitive" } },
+          { subject: { contains: q } },
           ...(Number.isFinite(Number(q)) ? [{ number: Number(q) }] : []),
         ],
       },
@@ -45,7 +45,7 @@ export async function GET(req: NextRequest) {
     db.deal.findMany({
       where: {
         organizationId,
-        title: { contains: q, mode: "insensitive" },
+        title: { contains: q },
       },
       select: { id: true, number: true, title: true },
       take: 8,
@@ -53,7 +53,7 @@ export async function GET(req: NextRequest) {
     db.product.findMany({
       where: {
         organizationId,
-        name: { contains: q, mode: "insensitive" },
+        name: { contains: q },
       },
       select: { id: true, name: true },
       take: 8,

@@ -1,15 +1,17 @@
 services:
-  postgres:
-    image: postgres:16-alpine
-    container_name: crm-postgres
+  mysql:
+    image: mysql:8.0
+    container_name: crm-mysql
     environment:
-      POSTGRES_USER: crm
-      POSTGRES_PASSWORD: crm
-      POSTGRES_DB: crm
+      MYSQL_ROOT_PASSWORD: crm
+      MYSQL_DATABASE: crm
+      MYSQL_USER: crm
+      MYSQL_PASSWORD: crm
     ports:
-      - "5434:5432"
+      - "3307:3306"
     volumes:
-      - crm_pg_data:/var/lib/postgresql/data
+      - crm_mysql_data:/var/lib/mysql
+    command: ["--default-authentication-plugin=mysql_native_password", "--character-set-server=utf8mb4", "--collation-server=utf8mb4_unicode_ci"]
 
 volumes:
-  crm_pg_data:
+  crm_mysql_data:

@@ -124,8 +124,8 @@ export default async function TicketsPage({ searchParams }: Props) {
 
   if (params.q?.trim()) {
     where.OR = [
-      { subject: { contains: params.q, mode: "insensitive" } },
-      { customer: { name: { contains: params.q, mode: "insensitive" } } },
+      { subject: { contains: params.q } },
+      { customer: { name: { contains: params.q } } },
       ...(Number.isFinite(Number(params.q))
         ? [{ number: Number(params.q) }]
         : []),

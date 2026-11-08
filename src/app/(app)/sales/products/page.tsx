@@ -55,10 +55,10 @@ export default async function ProductsPage({ searchParams }: Props) {
       ...(query
         ? {
             OR: [
-              { name: { contains: query, mode: "insensitive" as const } },
-              { sku: { contains: query, mode: "insensitive" as const } },
-              { category: { contains: query, mode: "insensitive" as const } },
-              { description: { contains: query, mode: "insensitive" as const } },
+              { name: { contains: query } },
+              { sku: { contains: query } },
+              { category: { contains: query } },
+              { description: { contains: query } },
             ],
           }
         : {}),

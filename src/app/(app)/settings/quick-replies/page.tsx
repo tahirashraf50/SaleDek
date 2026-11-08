@@ -73,9 +73,9 @@ export default async function QuickRepliesSettingsPage({ searchParams }: Props) 
         ...(query
           ? {
               OR: [
-                { title: { contains: query, mode: "insensitive" as const } },
-                { body: { contains: query, mode: "insensitive" as const } },
-                { shortcut: { contains: query, mode: "insensitive" as const } },
+                { title: { contains: query } },
+                { body: { contains: query } },
+                { shortcut: { contains: query } },
               ],
             }
           : {}),

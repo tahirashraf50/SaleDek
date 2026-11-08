@@ -56,12 +56,12 @@ export default async function CompaniesPage({ searchParams }: Props) {
     ...(query
       ? {
           OR: [
-            { name: { contains: query, mode: "insensitive" as const } },
-            { industry: { contains: query, mode: "insensitive" as const } },
-            { city: { contains: query, mode: "insensitive" as const } },
-            { email: { contains: query, mode: "insensitive" as const } },
-            { phone: { contains: query, mode: "insensitive" as const } },
-            { ntn: { contains: query, mode: "insensitive" as const } },
+            { name: { contains: query } },
+            { industry: { contains: query } },
+            { city: { contains: query } },
+            { email: { contains: query } },
+            { phone: { contains: query } },
+            { ntn: { contains: query } },
           ],
         }
       : {}),

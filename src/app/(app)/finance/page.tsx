@@ -114,7 +114,7 @@ export default async function FinanceQueuePage({ searchParams }: Props) {
               OR: [
                 {
                   customer: {
-                    name: { contains: query, mode: "insensitive" as const },
+                    name: { contains: query },
                   },
                 },
                 Number.isFinite(Number(query))

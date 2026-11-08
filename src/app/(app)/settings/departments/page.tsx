@@ -71,11 +71,10 @@ export default async function SettingsDepartmentsPage({ searchParams }: Props) {
         ...(query
           ? {
               OR: [
-                { name: { contains: query, mode: "insensitive" as const } },
+                { name: { contains: query } },
                 {
                   description: {
                     contains: query,
-                    mode: "insensitive" as const,
                   },
                 },
               ],

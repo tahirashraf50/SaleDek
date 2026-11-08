@@ -57,10 +57,10 @@ export default async function KnowledgeSettingsPage({ searchParams }: Props) {
         ...(query
           ? {
               OR: [
-                { title: { contains: query, mode: "insensitive" as const } },
-                { body: { contains: query, mode: "insensitive" as const } },
+                { title: { contains: query } },
+                { body: { contains: query } },
                 {
-                  category: { contains: query, mode: "insensitive" as const },
+                  category: { contains: query },
                 },
               ],
             }

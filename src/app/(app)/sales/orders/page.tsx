@@ -120,9 +120,9 @@ export default async function OrdersPage({ searchParams }: Props) {
     ...(query
       ? {
           OR: [
-            { customer: { name: { contains: query, mode: "insensitive" } } },
-            { customer: { phone: { contains: query, mode: "insensitive" } } },
-            { notes: { contains: query, mode: "insensitive" } },
+            { customer: { name: { contains: query } } },
+            { customer: { phone: { contains: query } } },
+            { notes: { contains: query } },
             ...(Number.isFinite(Number(query))
               ? [{ number: Number(query) }]
               : []),

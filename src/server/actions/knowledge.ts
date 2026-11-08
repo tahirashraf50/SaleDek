@@ -48,9 +48,9 @@ export async function searchKnowledge(query: string) {
       organizationId: session.organizationId,
       active: true,
       OR: [
-        { title: { contains: query, mode: "insensitive" } },
-        { body: { contains: query, mode: "insensitive" } },
-        { category: { contains: query, mode: "insensitive" } },
+        { title: { contains: query } },
+        { body: { contains: query } },
+        { category: { contains: query } },
       ],
     },
     take: 10,
