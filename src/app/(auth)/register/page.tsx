@@ -3,19 +3,13 @@ import { redirect } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { SaaSPlanKey } from "@prisma/client";
 import { db } from "@/lib/db";
-import { registerOrganization } from "@/server/actions/auth";
+import { RegisterForm } from "@/components/auth/register-form";
 import { formatPlatformCurrency } from "@/lib/utils";
 import { getWebsiteSettings } from "@/lib/platform-website";
 
 export const dynamic = "force-dynamic";
 
 type Props = { searchParams: Promise<{ plan?: string }> };
-
-const fieldClass =
-  "h-12 w-full rounded-2xl border border-[var(--site-line)] bg-[var(--site-soft)] px-4 text-sm text-[var(--site-ink)] outline-none transition focus:border-[var(--site-purple)] focus:bg-white focus:ring-4 focus:ring-[rgba(172,22,224,0.12)]";
-
-const labelClass =
-  "mb-1.5 block text-xs font-semibold uppercase tracking-[0.08em] text-[var(--site-muted)]";
 
 export default async function RegisterPage({ searchParams }: Props) {
   const site = await getWebsiteSettings();
@@ -30,7 +24,6 @@ export default async function RegisterPage({ searchParams }: Props) {
     plans.find((p) => p.key === "STARTER") ||
     plans[0];
 
-  // Paid plans go through SaaS checkout (payment → expiry window).
   if (
     selected &&
     Number(selected.priceMonthly) > 0 &&
@@ -83,78 +76,22 @@ export default async function RegisterPage({ searchParams }: Props) {
             <h1 className="mt-4 text-3xl font-semibold tracking-tight text-[var(--site-ink)] md:text-4xl">
               Create your workspace
             </h1>
-            <p className="mt-2 text-sm leading-relaxed text-[var(--site-muted)]">{planNote}</p>
+            <p className="mt-2 text-sm leading-relaxed text-[var(--site-muted)]">
+              {planNote}
+            </p>
           </div>
 
           <div className="rounded-[1.75rem] border border-[var(--site-line)] bg-white/90 p-7 shadow-[0_28px_60px_-36px_rgba(172,22,224,0.45)] backdrop-blur-sm md:p-8">
-            <form action={registerOrganization} className="space-y-4">
-              <div>
-                <label htmlFor="plan" className={labelClass}>
-                  Package
-                </label>
-                <select
-                  id="plan"
-                  name="plan"
-                  defaultValue={selected?.key || "DEMO"}
-                  className={fieldClass}
-                >
-                  {plans.map((p) => (
-                    <option key={p.id} value={p.key}>
-                      {p.trialDays
-                        ? `${p.name} — ${p.trialDays}-day free demo`
-                        : `${p.name} — ${formatPlatformCurrency(Number(p.priceMonthly))}/mo`}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label htmlFor="orgName" className={labelClass}>
-                  Organization
-                </label>
-                <input id="orgName" name="orgName" required className={fieldClass} />
-              </div>
-              <div>
-                <label htmlFor="name" className={labelClass}>
-                  Your name
-                </label>
-                <input id="name" name="name" required className={fieldClass} />
-              </div>
-              <div>
-                <label htmlFor="email" className={labelClass}>
-                  Email
-                </label>
-                <input id="email" name="email" type="email" required className={fieldClass} />
-              </div>
-              <div>
-                <label htmlFor="password" className={labelClass}>
-                  Password
-                </label>
-                <input
-                  id="password"
-                  name="password"
-                  type="password"
-                  required
-                  minLength={6}
-                  className={fieldClass}
-                />
-              </div>
-              <button type="submit" className="site-btn-primary mt-2 w-full">
-                Create account
-              </button>
-            </form>
-
-            <p className="mt-6 text-center text-sm text-[var(--site-muted)]">
-              <Link
-                href="/pricing"
-                className="font-semibold text-[var(--site-purple)] hover:underline"
-              >
-                Compare packages
-              </Link>
-              {" · "}
-              <Link href="/login" className="font-semibold text-[var(--site-purple)] hover:underline">
-                Sign in
-              </Link>
-            </p>
+            <RegisterForm
+              selectedKey={selected?.key || "DEMO"}
+              plans={plans.map((p) => ({
+                id: p.id,
+                key: p.key,
+                name: p.name,
+                priceMonthly: Number(p.priceMonthly),
+                trialDays: p.trialDays,
+              }))}
+            />
           </div>
         </div>
       </main>

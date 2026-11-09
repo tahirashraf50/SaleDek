@@ -23,8 +23,11 @@ const HIGHLIGHTS = [
   },
 ];
 
-export default async function LoginPage() {
+type Props = { searchParams: Promise<{ email?: string; activated?: string }> };
+
+export default async function LoginPage({ searchParams }: Props) {
   const site = await getWebsiteSettings();
+  const params = await searchParams;
 
   return (
     <div className="site-root relative flex min-h-screen flex-col lg:flex-row">
@@ -114,7 +117,11 @@ export default async function LoginPage() {
         </header>
 
         <main className="relative z-10 flex flex-1 items-start justify-center px-5 pb-10 pt-6 md:px-10 md:pt-10 lg:items-center lg:px-12 lg:pt-0">
-          <LoginForm brandName={site.brandName} />
+          <LoginForm
+            brandName={site.brandName}
+            defaultEmail={params.email}
+            activated={params.activated === "1"}
+          />
         </main>
       </div>
     </div>

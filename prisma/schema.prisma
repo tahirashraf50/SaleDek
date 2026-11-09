@@ -339,6 +339,10 @@ model User {
   departmentId   String?
   department     Department? @relation(fields: [departmentId], references: [id])
   active         Boolean  @default(true)
+  /// Set when work email activation link is confirmed
+  emailVerifiedAt DateTime?
+  activationToken String?  @unique
+  activationExpiresAt DateTime?
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 

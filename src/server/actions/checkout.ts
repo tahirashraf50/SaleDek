@@ -2,11 +2,10 @@
 
 import bcrypt from "bcryptjs";
 import { SaaSPlanKey } from "@prisma/client";
-import { AuthError } from "next-auth";
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
 import { writeAudit } from "@/lib/audit";
-import { signIn } from "@/lib/auth";
 import { seedOrganizationDefaults } from "@/lib/org-defaults";
 import {
   activatePaidPlatformInvoice,
@@ -17,20 +16,15 @@ import {
 } from "@/lib/saas-billing";
 import { slugify } from "@/lib/utils";
 import { requireOrgSession } from "@/lib/session";
+import { assertBusinessEmail } from "@/lib/business-email";
+import {
+  ensureUserActivationColumns,
+  issueActivationEmail,
+} from "@/lib/account-activation";
 
 export type CheckoutState = { error?: string; ok?: boolean };
 
 const CARD_METHOD = "CARD";
-
-function isNextRedirect(error: unknown): boolean {
-  return (
-    typeof error === "object" &&
-    error !== null &&
-    "digest" in error &&
-    typeof (error as { digest?: unknown }).digest === "string" &&
-    String((error as { digest: string }).digest).startsWith("NEXT_REDIRECT")
-  );
-}
 
 async function ensureInvoicePaymentColumns() {
   for (const sql of [
@@ -78,6 +72,9 @@ export async function checkoutPaidPlan(
     return { error: "Fill all fields (password min 6 characters)." };
   }
 
+  const businessError = assertBusinessEmail(email);
+  if (businessError) return { error: businessError };
+
   const plan = await db.saaSPlan.findUnique({ where: { key: planKey } });
   if (!plan || !plan.active) return { error: "Plan not found." };
   if (Number(plan.priceMonthly) <= 0 || (plan.trialDays && plan.trialDays > 0)) {
@@ -103,6 +100,7 @@ export async function checkoutPaidPlan(
 
   const passwordHash = await bcrypt.hash(password, 10);
 
+  let userId = "";
   try {
     const result = await db.$transaction(async (tx) => {
       const org = await tx.organization.create({
@@ -118,9 +116,11 @@ export async function checkoutPaidPlan(
               name,
               passwordHash,
               role: "ORG_ADMIN",
+              active: false,
             },
           },
         },
+        include: { users: { where: { email }, take: 1 } },
       });
 
       const sub = await tx.orgSubscription.create({
@@ -164,8 +164,18 @@ export async function checkoutPaidPlan(
         },
       });
 
-      return { orgId: org.id, invoiceId: invoice.id };
+      return {
+        orgId: org.id,
+        invoiceId: invoice.id,
+        userId: org.users[0]?.id || "",
+      };
     });
+
+    userId = result.userId;
+    if (!userId) {
+      const created = await db.user.findUnique({ where: { email } });
+      userId = created?.id || "";
+    }
 
     await seedOrganizationDefaults(db, result.orgId);
     await writeAudit({
@@ -178,14 +188,30 @@ export async function checkoutPaidPlan(
         invoiceId: result.invoiceId,
         paymentStatus: charge.status,
         periodEnd: periodEnd.toISOString(),
+        pendingActivation: true,
       },
     });
+
+    if (userId) {
+      await issueActivationEmail({
+        userId,
+        email,
+        name,
+        orgName,
+      });
+    }
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
     if (/paymentMethod|paymentReference|Unknown column/i.test(message)) {
       await ensureInvoicePaymentColumns();
       return {
         error: "Billing schema updated — please submit payment again.",
+      };
+    }
+    if (/emailVerifiedAt|activationToken|Unknown column/i.test(message)) {
+      await ensureUserActivationColumns();
+      return {
+        error: "Account schema updated — please submit payment again.",
       };
     }
     console.error("[checkoutPaidPlan]", err);
@@ -195,24 +221,7 @@ export async function checkoutPaidPlan(
   revalidatePath("/admin/orgs");
   revalidatePath("/pricing");
 
-  try {
-    await signIn("credentials", {
-      email,
-      password,
-      redirectTo: "/inbox?welcome=1",
-    });
-  } catch (error) {
-    if (isNextRedirect(error)) throw error;
-    if (error instanceof AuthError) {
-      return {
-        ok: true,
-        error: "Account created — sign in to continue.",
-      };
-    }
-    throw error;
-  }
-
-  return { ok: true };
+  redirect(`/check-email?email=${encodeURIComponent(email)}`);
 }
 
 /** Logged-in ORG_ADMIN: pay / renew with credit card (extends plan expiry). */

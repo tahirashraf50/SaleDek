@@ -107,10 +107,14 @@ CREATE TABLE `User` (
     `role` ENUM('SUPER_ADMIN', 'ORG_ADMIN', 'MANAGER', 'AGENT', 'DEPARTMENT_USER', 'VIEWER') NOT NULL DEFAULT 'AGENT',
     `departmentId` VARCHAR(191) NULL,
     `active` BOOLEAN NOT NULL DEFAULT true,
+    `emailVerifiedAt` DATETIME(3) NULL,
+    `activationToken` VARCHAR(191) NULL,
+    `activationExpiresAt` DATETIME(3) NULL,
     `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `updatedAt` DATETIME(3) NOT NULL,
 
     UNIQUE INDEX `User_email_key`(`email`),
+    UNIQUE INDEX `User_activationToken_key`(`activationToken`),
     INDEX `User_organizationId_idx`(`organizationId`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;

@@ -99,6 +99,9 @@ export async function bootstrapMysql(): Promise<BootstrapMysqlResult> {
     "ALTER TABLE `PlatformWebsiteSettings` ADD COLUMN `faviconPath` VARCHAR(191) NULL",
     "ALTER TABLE `PlatformWebsiteSettings` ADD COLUMN `faviconData` LONGTEXT NULL",
     "ALTER TABLE `PlatformWebsiteSettings` ADD COLUMN `faviconMime` VARCHAR(191) NULL",
+    "ALTER TABLE `User` ADD COLUMN `emailVerifiedAt` DATETIME(3) NULL",
+    "ALTER TABLE `User` ADD COLUMN `activationToken` VARCHAR(191) NULL",
+    "ALTER TABLE `User` ADD COLUMN `activationExpiresAt` DATETIME(3) NULL",
   ]) {
     try {
       await db.$executeRawUnsafe(patch);

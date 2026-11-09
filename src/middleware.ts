@@ -20,7 +20,9 @@ export async function middleware(req: NextRequest) {
   const isAuth =
     path.startsWith("/login") ||
     path.startsWith("/register") ||
-    path.startsWith("/checkout");
+    path.startsWith("/checkout") ||
+    path.startsWith("/check-email") ||
+    path.startsWith("/activate");
   const isPublic =
     isAuth ||
     path === "/" ||

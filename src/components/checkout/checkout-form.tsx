@@ -88,20 +88,23 @@ export function CheckoutForm({
             placeholder="Sara Khan"
           />
         </div>
-        <div>
-          <label htmlFor="email" className={labelClass}>
-            Email
-          </label>
-          <input
-            id="email"
-            name="email"
-            type="email"
-            required
-            autoComplete="email"
-            className={fieldClass}
-            placeholder="you@company.com"
-          />
-        </div>
+      <div>
+        <label htmlFor="email" className={labelClass}>
+          Work email
+        </label>
+        <input
+          id="email"
+          name="email"
+          type="email"
+          required
+          autoComplete="email"
+          className={fieldClass}
+          placeholder="you@company.com"
+        />
+        <p className="mt-1 text-[10px] text-[var(--site-muted)]">
+          Company domain only — activation link is sent here
+        </p>
+      </div>
         <div>
           <label htmlFor="password" className={labelClass}>
             Password

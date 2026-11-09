@@ -6,7 +6,15 @@ import { loginAction, type LoginState } from "@/server/actions/auth";
 
 const initialState: LoginState = {};
 
-export function LoginForm({ brandName }: { brandName: string }) {
+export function LoginForm({
+  brandName,
+  defaultEmail,
+  activated,
+}: {
+  brandName: string;
+  defaultEmail?: string;
+  activated?: boolean;
+}) {
   const [state, formAction, pending] = useActionState(loginAction, initialState);
 
   return (
@@ -20,6 +28,14 @@ export function LoginForm({ brandName }: { brandName: string }) {
       </p>
 
       <form action={formAction} className="mt-7 space-y-4">
+        {activated ? (
+          <p
+            role="status"
+            className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800"
+          >
+            Email verified — your account is enabled. Sign in to continue.
+          </p>
+        ) : null}
         {state.error ? (
           <p
             role="alert"
@@ -40,6 +56,7 @@ export function LoginForm({ brandName }: { brandName: string }) {
             name="email"
             type="email"
             required
+            defaultValue={defaultEmail || ""}
             autoComplete="email"
             className="h-12 w-full rounded-2xl border border-[var(--site-line)] bg-white px-4 text-sm text-[var(--site-ink)] outline-none transition focus:border-[var(--site-purple)] focus:ring-4 focus:ring-[rgba(172,22,224,0.12)]"
           />
