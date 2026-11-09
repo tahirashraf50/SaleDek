@@ -70,6 +70,8 @@ CREATE TABLE `PlatformInvoice` (
     `paidAt` DATETIME(3) NULL,
     `billingEmail` VARCHAR(191) NULL,
     `notes` VARCHAR(191) NULL,
+    `paymentMethod` VARCHAR(191) NULL,
+    `paymentReference` VARCHAR(191) NULL,
     `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `updatedAt` DATETIME(3) NOT NULL,
 

@@ -302,6 +302,8 @@ model PlatformInvoice {
   paidAt         DateTime?
   billingEmail   String?
   notes          String?
+  paymentMethod  String?
+  paymentReference String?
   createdAt      DateTime              @default(now())
   updatedAt      DateTime              @updatedAt
   events         PlatformBillingEvent[]

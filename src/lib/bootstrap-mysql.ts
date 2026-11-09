@@ -92,6 +92,21 @@ export async function bootstrapMysql(): Promise<BootstrapMysqlResult> {
 
   logs.push(`applied ${applied}/${statements.length} statements`);
 
+  // Additive patches for DBs created before newer columns existed.
+  for (const patch of [
+    "ALTER TABLE `PlatformInvoice` ADD COLUMN `paymentMethod` VARCHAR(191) NULL",
+    "ALTER TABLE `PlatformInvoice` ADD COLUMN `paymentReference` VARCHAR(191) NULL",
+  ]) {
+    try {
+      await db.$executeRawUnsafe(patch);
+      logs.push(`patch: ${patch.slice(0, 80)}`);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      if (/Duplicate column|already exists/i.test(message)) continue;
+      logs.push(`patch skip: ${message.slice(0, 120)}`);
+    }
+  }
+
   let seeded = false;
   let users: number | null = null;
   try {

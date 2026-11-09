@@ -616,39 +616,10 @@ export async function sendPlatformInvoiceFollowUp(
 
 export async function markPlatformInvoicePaid(invoiceId: string) {
   const session = await requireSuperAdmin();
-  const invoice = await db.platformInvoice.findUnique({
-    where: { id: invoiceId },
-    include: { subscription: true },
-  });
-  if (!invoice) throw new Error("Invoice not found");
-
-  await db.platformInvoice.update({
-    where: { id: invoiceId },
-    data: { status: "PAID", paidAt: new Date() },
-  });
-
-  if (invoice.subscriptionId) {
-    await db.orgSubscription.update({
-      where: { id: invoice.subscriptionId },
-      data: {
-        status: "ACTIVE",
-        startedAt: invoice.periodStart,
-        endsAt: invoice.periodEnd,
-        renewsAt: invoice.periodEnd,
-      },
-    });
-  }
-
-  await db.organization.update({
-    where: { id: invoice.organizationId },
-    data: { status: "ACTIVE", trialEndsAt: null },
-  });
-
-  await logBillingEvent({
-    invoiceId,
-    type: "MARKED_PAID",
+  const { activatePaidPlatformInvoice } = await import("@/lib/saas-billing");
+  const invoice = await activatePaidPlatformInvoice(db, invoiceId, {
+    mode: "admin",
     createdById: session.user.id,
-    body: `Marked paid ${formatPlatformCurrency(Number(invoice.amount))}`,
   });
 
   await writeAudit({

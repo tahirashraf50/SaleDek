@@ -1,9 +1,12 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { addYears } from "date-fns";
 import { CreditCard, FileText } from "lucide-react";
+import { RenewBillingForm } from "@/components/checkout/renew-form";
 import { requireOrgSession } from "@/lib/session";
 import { db } from "@/lib/db";
-import {cn, formatCurrency, formatDate, formatPlatformCurrency} from "@/lib/utils";
+import { annualAmountFromMonthly } from "@/lib/saas-billing";
+import { cn, formatDate, formatPlatformCurrency } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
@@ -15,11 +18,17 @@ const INV_STYLE: Record<string, string> = {
   CANCELLED: "bg-slate-100 text-slate-500 ring-slate-200",
 };
 
-export default async function BillingSettingsPage() {
+export default async function BillingSettingsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ pending?: string }>;
+}) {
   const session = await requireOrgSession();
   if (session.user.role !== "ORG_ADMIN") {
     redirect("/inbox");
   }
+
+  const { pending } = await searchParams;
 
   const org = await db.organization.findUnique({
     where: { id: session.organizationId },
@@ -43,6 +52,17 @@ export default async function BillingSettingsPage() {
   const plan = sub?.plan || org.plan;
   const startedAt = sub?.startedAt || org.createdAt;
   const expiresAt = sub?.endsAt || org.trialEndsAt;
+  const monthly = plan ? Number(plan.priceMonthly) : 0;
+  const isPaidPlan = monthly > 0 && !(plan?.trialDays && plan.trialDays > 0);
+  const openInvoice = org.platformInvoices.find((inv) =>
+    ["DRAFT", "SENT", "OVERDUE"].includes(inv.status),
+  );
+  const renewFrom =
+    sub?.endsAt && sub.endsAt > new Date() ? new Date(sub.endsAt) : new Date();
+  const nextPeriodEnd = addYears(renewFrom, 1);
+  const renewAmount = openInvoice
+    ? Number(openInvoice.amount)
+    : annualAmountFromMonthly(monthly);
 
   return (
     <div className="space-y-5">
@@ -58,6 +78,16 @@ export default async function BillingSettingsPage() {
           Plan, subscription period, and invoices for {org.name}
         </p>
       </div>
+
+      {pending ? (
+        <p
+          role="status"
+          className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900"
+        >
+          Payment is awaiting confirmation. Once verified, your plan stays active
+          through the invoice period end.
+        </p>
+      ) : null}
 
       <div className="grid gap-4 md:grid-cols-3">
         <div className="rounded-2xl border border-[#eee8f5] bg-white p-5 shadow-sm md:col-span-2">
@@ -78,7 +108,7 @@ export default async function BillingSettingsPage() {
             </div>
             {plan && (
               <p className="text-lg font-semibold text-slate-800">
-                {formatPlatformCurrency(Number(plan.priceMonthly))}
+                {formatPlatformCurrency(monthly)}
                 <span className="text-sm font-normal text-slate-400">/mo</span>
               </p>
             )}
@@ -116,8 +146,8 @@ export default async function BillingSettingsPage() {
             Need help?
           </p>
           <p className="mt-2 text-sm leading-relaxed text-white/70">
-            Invoices and renewals are managed by the platform. Contact support if
-            you need a plan change or payment confirmation.
+            Pay with JazzCash or bank transfer to activate or renew. Verified
+            payments extend your plan expiry by one year.
           </p>
           <Link
             href="/contact"
@@ -127,6 +157,21 @@ export default async function BillingSettingsPage() {
           </Link>
         </div>
       </div>
+
+      {isPaidPlan ? (
+        <RenewBillingForm
+          invoiceId={openInvoice?.id}
+          amount={renewAmount}
+          periodLabel={formatDate(
+            openInvoice?.periodEnd || nextPeriodEnd,
+          )}
+          ctaLabel={
+            openInvoice
+              ? `Pay invoice ${openInvoice.number}`
+              : "Pay annual renewal"
+          }
+        />
+      ) : null}
 
       <div className="overflow-hidden rounded-2xl border border-[#eee8f5] bg-white shadow-sm">
         <div className="flex items-center gap-2 border-b border-[#eee8f5] px-5 py-4">
@@ -150,13 +195,16 @@ export default async function BillingSettingsPage() {
                   </p>
                   <p className="text-xs text-slate-500">
                     {formatDate(inv.periodStart)} – {formatDate(inv.periodEnd)}
+                    {inv.paymentReference
+                      ? ` · ref ${inv.paymentReference}`
+                      : ""}
                   </p>
                 </div>
                 <div className="flex items-center gap-3">
                   <span
                     className={cn(
                       "rounded-md px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ring-1",
-                      INV_STYLE[inv.status] || INV_STYLE.DRAFT
+                      INV_STYLE[inv.status] || INV_STYLE.DRAFT,
                     )}
                   >
                     {inv.status}

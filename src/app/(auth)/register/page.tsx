@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { SaaSPlanKey } from "@prisma/client";
 import { db } from "@/lib/db";
@@ -25,8 +26,18 @@ export default async function RegisterPage({ searchParams }: Props) {
   });
   const selected =
     plans.find((p) => p.key === (planParam?.toUpperCase() as SaaSPlanKey)) ||
+    plans.find((p) => p.key === "DEMO") ||
     plans.find((p) => p.key === "STARTER") ||
     plans[0];
+
+  // Paid plans go through SaaS checkout (payment → expiry window).
+  if (
+    selected &&
+    Number(selected.priceMonthly) > 0 &&
+    !(selected.trialDays && selected.trialDays > 0)
+  ) {
+    redirect(`/checkout?plan=${selected.key}`);
+  }
 
   const planNote = selected
     ? selected.trialDays

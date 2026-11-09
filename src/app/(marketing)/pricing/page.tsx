@@ -22,8 +22,8 @@ export default async function PricingPage() {
             Packages for every team size
           </h1>
           <p className="mx-auto mt-4 max-w-xl text-[var(--site-muted)]">
-            Start a demo, attach a plan to your org, and manage billing from the platform
-            console.
+            Start a free demo, or checkout a paid plan — payment activates your subscription
+            through the annual expiry date.
           </p>
         </div>
       </section>
@@ -80,7 +80,11 @@ export default async function PricingPage() {
                   ))}
                 </ul>
                 <Link
-                  href={`/register?plan=${plan.key}`}
+                  href={
+                    isDemo || price <= 0
+                      ? `/register?plan=${plan.key}`
+                      : `/checkout?plan=${plan.key}`
+                  }
                   className={`mt-8 block rounded-full px-4 py-2.5 text-center text-sm font-semibold transition ${
                     featured
                       ? "bg-[var(--site-purple)] text-white hover:bg-[var(--site-purple-deep)]"
@@ -89,9 +93,9 @@ export default async function PricingPage() {
                         : "bg-[var(--site-ink)] text-white hover:bg-black"
                   }`}
                 >
-                  {isDemo
+                  {isDemo || price <= 0
                     ? `Start ${plan.trialDays || 15}-day demo`
-                    : `Choose ${plan.name}`}
+                    : `Buy ${plan.name}`}
                 </Link>
               </div>
             );

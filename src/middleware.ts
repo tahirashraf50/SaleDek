@@ -17,7 +17,10 @@ export async function middleware(req: NextRequest) {
   });
 
   const path = req.nextUrl.pathname;
-  const isAuth = path.startsWith("/login") || path.startsWith("/register");
+  const isAuth =
+    path.startsWith("/login") ||
+    path.startsWith("/register") ||
+    path.startsWith("/checkout");
   const isPublic =
     isAuth ||
     path === "/" ||
