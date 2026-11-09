@@ -23,6 +23,20 @@ export async function generateMetadata() {
   return buildMarketingMetadata("home");
 }
 
+/** Keep hero title on two intentional lines when possible. */
+function formatHeroHeadline(text: string): string[] {
+  const trimmed = text.trim();
+  if (!trimmed) return [""];
+  if (trimmed.includes("\n")) {
+    return trimmed.split(/\n+/).map((l) => l.trim()).filter(Boolean);
+  }
+  const match = trimmed.match(
+    /^(Everything Your Business Needs)\s+(to Serve and Sell\.?)$/i,
+  );
+  if (match) return [match[1], match[2]];
+  return [trimmed];
+}
+
 const ANALYSIS_IMG =
   "https://themewant.com/products/wordpress/saafiy/crm/wp-content/uploads/sites/2/2024/10/group_1000005169-1-768x656-1.webp";
 const DEAL_IMG =
@@ -117,8 +131,12 @@ export default async function SiteHomePage() {
               <Sparkles className="h-3.5 w-3.5" />
               {site.heroBadge}
             </span>
-            <h1 className="site-anim-fade site-anim-fade-delay-1 mt-5 text-4xl font-semibold leading-[1.08] tracking-tight text-[var(--site-ink)] md:text-6xl lg:text-[4.6rem]">
-              {site.heroHeadline}
+            <h1 className="site-anim-fade site-anim-fade-delay-1 mt-5 text-4xl font-semibold leading-[1.12] tracking-tight text-[var(--site-ink)] md:text-5xl lg:text-[3.75rem]">
+              {formatHeroHeadline(site.heroHeadline).map((line, i) => (
+                <span key={`${line}-${i}`} className="block">
+                  {line}
+                </span>
+              ))}
             </h1>
             <p className="site-anim-fade site-anim-fade-delay-2 mt-5 max-w-lg text-base leading-relaxed text-[var(--site-muted)] md:text-lg">
               {site.heroSubtext}
