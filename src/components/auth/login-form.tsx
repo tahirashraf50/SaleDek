@@ -40,7 +40,6 @@ export function LoginForm({ brandName }: { brandName: string }) {
             name="email"
             type="email"
             required
-            defaultValue="admin@demo.com"
             autoComplete="email"
             className="h-12 w-full rounded-2xl border border-[var(--site-line)] bg-white px-4 text-sm text-[var(--site-ink)] outline-none transition focus:border-[var(--site-purple)] focus:ring-4 focus:ring-[rgba(172,22,224,0.12)]"
           />
@@ -57,7 +56,6 @@ export function LoginForm({ brandName }: { brandName: string }) {
             name="password"
             type="password"
             required
-            defaultValue="demo1234"
             autoComplete="current-password"
             className="h-12 w-full rounded-2xl border border-[var(--site-line)] bg-white px-4 text-sm text-[var(--site-ink)] outline-none transition focus:border-[var(--site-purple)] focus:ring-4 focus:ring-[rgba(172,22,224,0.12)]"
           />
@@ -72,9 +70,6 @@ export function LoginForm({ brandName }: { brandName: string }) {
         <Link href="/register" className="font-semibold text-[var(--site-purple)] hover:underline">
           Register
         </Link>
-      </p>
-      <p className="mt-3 text-[11px] leading-relaxed text-[var(--site-muted)]">
-        Demo · admin@demo.com · finance@demo.com · super@pulsecrm.com · pass demo1234
       </p>
     </div>
   );
