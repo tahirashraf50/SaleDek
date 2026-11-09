@@ -31,7 +31,7 @@ export default async function SiteLayout({
                 <img
                   src={site.logoUrl}
                   alt={site.brandName}
-                  className="h-10 w-auto max-w-[180px] object-contain"
+                  className="h-11 w-auto max-w-[200px] object-contain"
                 />
               ) : (
                 <>

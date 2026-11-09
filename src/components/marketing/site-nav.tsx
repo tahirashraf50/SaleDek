@@ -53,7 +53,7 @@ export function SiteNav({
             <img
               src={logoUrl}
               alt={brandName}
-              className="h-9 w-auto max-w-[160px] object-contain"
+              className="h-11 w-auto max-w-[200px] object-contain"
             />
           ) : (
             <>
