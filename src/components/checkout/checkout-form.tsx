@@ -45,15 +45,6 @@ export function CheckoutForm({
           {state.error}
         </p>
       ) : null}
-      {state.ok && state.pendingReview ? (
-        <p
-          role="status"
-          className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900"
-        >
-          Payment submitted for review. Your workspace opens with a short grace
-          window until the reference is confirmed.
-        </p>
-      ) : null}
 
       <div className="rounded-2xl border border-[var(--site-line)] bg-[var(--site-soft)]/80 px-4 py-3">
         <p className="text-xs font-semibold uppercase tracking-[0.1em] text-[var(--site-muted)]">
@@ -126,38 +117,63 @@ export function CheckoutForm({
 
       <div className="border-t border-[var(--site-line)] pt-4">
         <p className="mb-3 text-xs font-semibold uppercase tracking-[0.1em] text-[var(--site-muted)]">
-          Payment
+          Credit card
         </p>
         <div>
-          <label htmlFor="paymentMethod" className={labelClass}>
-            Method
-          </label>
-          <select
-            id="paymentMethod"
-            name="paymentMethod"
-            className={fieldClass}
-            defaultValue="JAZZCASH"
-          >
-            <option value="JAZZCASH">JazzCash</option>
-            <option value="BANK">Bank transfer</option>
-          </select>
-        </div>
-        <div className="mt-3">
-          <label htmlFor="paymentReference" className={labelClass}>
-            Transaction / reference ID
+          <label htmlFor="cardName" className={labelClass}>
+            Name on card
           </label>
           <input
-            id="paymentReference"
-            name="paymentReference"
+            id="cardName"
+            name="cardName"
             required
+            autoComplete="cc-name"
             className={fieldClass}
-            placeholder="JC-OK-123456 or bank slip ref"
+            placeholder="Name on card"
           />
-          <p className="mt-1.5 text-xs text-[var(--site-muted)]">
-            Sandbox: use a JazzCash ref starting with{" "}
-            <span className="font-medium text-[var(--site-ink)]">JC-OK-</span>{" "}
-            for instant activation, or a bank reference (8+ chars).
-          </p>
+        </div>
+        <div className="mt-3">
+          <label htmlFor="cardNumber" className={labelClass}>
+            Card number
+          </label>
+          <input
+            id="cardNumber"
+            name="cardNumber"
+            required
+            inputMode="numeric"
+            autoComplete="cc-number"
+            className={fieldClass}
+            placeholder="ACCT-000015"
+          />
+        </div>
+        <div className="mt-3 grid grid-cols-2 gap-3">
+          <div>
+            <label htmlFor="cardExpiry" className={labelClass}>
+              Expiry
+            </label>
+            <input
+              id="cardExpiry"
+              name="cardExpiry"
+              required
+              autoComplete="cc-exp"
+              className={fieldClass}
+              placeholder="MM/YY"
+            />
+          </div>
+          <div>
+            <label htmlFor="cardCvc" className={labelClass}>
+              CVC
+            </label>
+            <input
+              id="cardCvc"
+              name="cardCvc"
+              required
+              inputMode="numeric"
+              autoComplete="cc-csc"
+              className={fieldClass}
+              placeholder="123"
+            />
+          </div>
         </div>
       </div>
 

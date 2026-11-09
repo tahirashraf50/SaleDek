@@ -146,8 +146,8 @@ export default async function BillingSettingsPage({
             Need help?
           </p>
           <p className="mt-2 text-sm leading-relaxed text-white/70">
-            Pay with JazzCash or bank transfer to activate or renew. Verified
-            payments extend your plan expiry by one year.
+            Pay by credit card to activate or renew. Successful charges extend
+            your plan expiry by one year.
           </p>
           <Link
             href="/contact"

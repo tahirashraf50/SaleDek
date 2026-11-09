@@ -86,7 +86,7 @@ export default async function CheckoutPage({ searchParams }: Props) {
             </li>
             <li className="flex gap-2">
               <span className="text-[var(--site-purple)]">✓</span>
-              Instant activation with verified JazzCash / bank reference
+              Pay by credit card — plan activates instantly through expiry
             </li>
           </ul>
         </div>

@@ -1,7 +1,7 @@
 "use server";
 
 import bcrypt from "bcryptjs";
-import { PaymentMethod, SaaSPlanKey } from "@prisma/client";
+import { SaaSPlanKey } from "@prisma/client";
 import { AuthError } from "next-auth";
 import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
@@ -12,21 +12,15 @@ import {
   activatePaidPlatformInvoice,
   annualAmountFromMonthly,
   billingPeriod,
-  evaluateSaasPayment,
+  chargeCardSandbox,
   nextPlatformInvoiceNumber,
 } from "@/lib/saas-billing";
 import { slugify } from "@/lib/utils";
 import { requireOrgSession } from "@/lib/session";
 
-export type CheckoutState = { error?: string; ok?: boolean; pendingReview?: boolean };
+export type CheckoutState = { error?: string; ok?: boolean };
 
-const PAID_METHODS: PaymentMethod[] = ["JAZZCASH", "BANK"];
-
-function parseMethod(raw: string): PaymentMethod {
-  const m = raw.toUpperCase() as PaymentMethod;
-  if (!PAID_METHODS.includes(m)) return "JAZZCASH";
-  return m;
-}
+const CARD_METHOD = "CARD";
 
 function isNextRedirect(error: unknown): boolean {
   return (
@@ -54,10 +48,18 @@ async function ensureInvoicePaymentColumns() {
   }
 }
 
+function readCard(formData: FormData) {
+  return {
+    cardName: String(formData.get("cardName") || "").trim(),
+    cardNumber: String(formData.get("cardNumber") || ""),
+    cardExpiry: String(formData.get("cardExpiry") || "").trim(),
+    cardCvc: String(formData.get("cardCvc") || ""),
+  };
+}
+
 /**
- * Public SaaS checkout: create org + annual invoice + payment.
- * Verified payment → ACTIVE plan until periodEnd (expiry).
- * Pending review → invoice SENT, org TRIAL for 3 days grace.
+ * Public SaaS checkout: create org + annual invoice + credit card payment.
+ * Verified charge → ACTIVE plan until periodEnd (expiry).
  */
 export async function checkoutPaidPlan(
   _prev: CheckoutState,
@@ -70,14 +72,10 @@ export async function checkoutPaidPlan(
   const planKey = String(formData.get("plan") || "")
     .trim()
     .toUpperCase() as SaaSPlanKey;
-  const method = parseMethod(String(formData.get("paymentMethod") || "JAZZCASH"));
-  const reference = String(formData.get("paymentReference") || "").trim();
+  const card = readCard(formData);
 
   if (!orgName || !name || !email || password.length < 6) {
     return { error: "Fill all fields (password min 6 characters)." };
-  }
-  if (!reference) {
-    return { error: "Enter your payment reference / transaction ID." };
   }
 
   const plan = await db.saaSPlan.findUnique({ where: { key: planKey } });
@@ -87,11 +85,16 @@ export async function checkoutPaidPlan(
   }
 
   const existing = await db.user.findUnique({ where: { email } });
-  if (existing) return { error: "Email already registered. Sign in and renew from Billing." };
+  if (existing) {
+    return { error: "Email already registered. Sign in and renew from Billing." };
+  }
 
   const amount = annualAmountFromMonthly(Number(plan.priceMonthly));
   const { periodStart, periodEnd, year } = billingPeriod();
-  const verify = evaluateSaasPayment({ method, reference, amount });
+  const charge = chargeCardSandbox({ ...card, amount });
+  if (!charge.ok) {
+    return { error: charge.message || "Card payment failed." };
+  }
 
   let slug = slugify(orgName) || "org";
   if (await db.organization.findUnique({ where: { slug } })) {
@@ -99,25 +102,16 @@ export async function checkoutPaidPlan(
   }
 
   const passwordHash = await bcrypt.hash(password, 10);
-  const pendingReview = verify.status === "PENDING_REVIEW";
-  const rejected = verify.status === "REJECTED";
-  if (rejected) {
-    return { error: verify.message || "Payment reference rejected." };
-  }
 
-  let invoiceId = "";
   try {
-    const paidNow = verify.ok && !pendingReview;
     const result = await db.$transaction(async (tx) => {
       const org = await tx.organization.create({
         data: {
           name: orgName,
           slug,
-          status: paidNow ? "ACTIVE" : "TRIAL",
+          status: "ACTIVE",
           planId: plan.id,
-          trialEndsAt: pendingReview
-            ? new Date(Date.now() + 3 * 24 * 60 * 60 * 1000)
-            : null,
+          trialEndsAt: null,
           users: {
             create: {
               email,
@@ -133,7 +127,7 @@ export async function checkoutPaidPlan(
         data: {
           organizationId: org.id,
           planId: plan.id,
-          status: paidNow ? "ACTIVE" : "TRIAL",
+          status: "ACTIVE",
           startedAt: periodStart,
           endsAt: periodEnd,
           renewsAt: periodEnd,
@@ -148,14 +142,14 @@ export async function checkoutPaidPlan(
           number,
           year,
           amount,
-          status: paidNow ? "PAID" : "SENT",
+          status: "PAID",
           periodStart,
           periodEnd,
           dueAt: periodStart,
-          paidAt: paidNow ? new Date() : null,
+          paidAt: new Date(),
           billingEmail: email,
-          paymentMethod: method,
-          paymentReference: reference,
+          paymentMethod: CARD_METHOD,
+          paymentReference: charge.reference,
           notes: `Annual ${plan.name} · ${periodEnd.toISOString().slice(0, 10)}`,
         },
       });
@@ -163,18 +157,15 @@ export async function checkoutPaidPlan(
       await tx.platformBillingEvent.create({
         data: {
           invoiceId: invoice.id,
-          type: paidNow ? "MARKED_PAID" : "INVOICE_SENT",
-          body: paidNow
-            ? `Checkout verified · ${method}`
-            : `Awaiting confirmation · ${method}`,
-          mode: verify.mock ? "sandbox" : "live",
+          type: "MARKED_PAID",
+          body: `Card checkout · ${charge.reference}`,
+          mode: charge.mock ? "sandbox" : "live",
           toEmail: email,
         },
       });
 
       return { orgId: org.id, invoiceId: invoice.id };
     });
-    invoiceId = result.invoiceId;
 
     await seedOrganizationDefaults(db, result.orgId);
     await writeAudit({
@@ -184,8 +175,8 @@ export async function checkoutPaidPlan(
       entityId: result.orgId,
       meta: {
         plan: plan.key,
-        invoiceId,
-        paymentStatus: verify.status,
+        invoiceId: result.invoiceId,
+        paymentStatus: charge.status,
         periodEnd: periodEnd.toISOString(),
       },
     });
@@ -208,26 +199,23 @@ export async function checkoutPaidPlan(
     await signIn("credentials", {
       email,
       password,
-      redirectTo: pendingReview
-        ? `/settings/billing?pending=${invoiceId}`
-        : "/inbox?welcome=1",
+      redirectTo: "/inbox?welcome=1",
     });
   } catch (error) {
     if (isNextRedirect(error)) throw error;
     if (error instanceof AuthError) {
       return {
         ok: true,
-        pendingReview,
         error: "Account created — sign in to continue.",
       };
     }
     throw error;
   }
 
-  return { ok: true, pendingReview };
+  return { ok: true };
 }
 
-/** Logged-in ORG_ADMIN: pay / renew current plan (creates invoice tied to expiry). */
+/** Logged-in ORG_ADMIN: pay / renew with credit card (extends plan expiry). */
 export async function renewOrPaySubscription(
   _prev: CheckoutState,
   formData: FormData,
@@ -237,13 +225,8 @@ export async function renewOrPaySubscription(
     return { error: "Only org admins can pay." };
   }
 
-  const method = parseMethod(String(formData.get("paymentMethod") || "JAZZCASH"));
-  const reference = String(formData.get("paymentReference") || "").trim();
+  const card = readCard(formData);
   const invoiceIdExisting = String(formData.get("invoiceId") || "").trim();
-
-  if (!reference) {
-    return { error: "Enter your payment reference / transaction ID." };
-  }
 
   const org = await db.organization.findUnique({
     where: { id: session.organizationId },
@@ -258,40 +241,27 @@ export async function renewOrPaySubscription(
   }
 
   const amount = annualAmountFromMonthly(Number(org.plan.priceMonthly));
-  const verify = evaluateSaasPayment({ method, reference, amount });
-  if (verify.status === "REJECTED") {
-    return { error: verify.message || "Payment rejected." };
+  const charge = chargeCardSandbox({ ...card, amount });
+  if (!charge.ok) {
+    return { error: charge.message || "Card payment failed." };
   }
 
-  let invoiceId = invoiceIdExisting;
-
   try {
-    if (invoiceId) {
+    if (invoiceIdExisting) {
       const inv = await db.platformInvoice.findFirst({
         where: {
-          id: invoiceId,
+          id: invoiceIdExisting,
           organizationId: org.id,
           status: { in: ["DRAFT", "SENT", "OVERDUE"] },
         },
       });
       if (!inv) return { error: "Invoice not found or already paid." };
 
-      await db.platformInvoice.update({
-        where: { id: inv.id },
-        data: {
-          paymentMethod: method,
-          paymentReference: reference,
-          status: verify.ok && verify.status !== "PENDING_REVIEW" ? inv.status : "SENT",
-          notes: `${inv.notes || ""}\nPayment submitted · ${method} · ${reference}`.trim(),
-        },
+      await activatePaidPlatformInvoice(db, inv.id, {
+        paymentMethod: CARD_METHOD,
+        paymentReference: charge.reference,
+        mode: charge.mock ? "sandbox" : "live",
       });
-
-      if (verify.ok && verify.status !== "PENDING_REVIEW") {
-        await activatePaidPlatformInvoice(db, inv.id, {
-          paymentMethod: method,
-          paymentReference: reference,
-        });
-      }
     } else {
       const sub = org.subscriptions[0];
       const base =
@@ -321,37 +291,22 @@ export async function renewOrPaySubscription(
           number,
           year,
           amount,
-          status:
-            verify.ok && verify.status !== "PENDING_REVIEW" ? "PAID" : "SENT",
+          status: "SENT",
           periodStart,
           periodEnd,
           dueAt: new Date(),
-          paidAt:
-            verify.ok && verify.status !== "PENDING_REVIEW" ? new Date() : null,
           billingEmail: session.user.email,
-          paymentMethod: method,
-          paymentReference: reference,
+          paymentMethod: CARD_METHOD,
+          paymentReference: charge.reference,
           notes: `Renewal checkout · ${org.plan.name}`,
         },
       });
-      invoiceId = invoice.id;
 
-      if (verify.ok && verify.status !== "PENDING_REVIEW") {
-        await activatePaidPlatformInvoice(db, invoice.id, {
-          paymentMethod: method,
-          paymentReference: reference,
-        });
-      } else {
-        await db.platformBillingEvent.create({
-          data: {
-            invoiceId: invoice.id,
-            type: "INVOICE_SENT",
-            body: `Renewal awaiting confirmation · ${method} · ${reference}`,
-            mode: "sandbox",
-            toEmail: session.user.email,
-          },
-        });
-      }
+      await activatePaidPlatformInvoice(db, invoice.id, {
+        paymentMethod: CARD_METHOD,
+        paymentReference: charge.reference,
+        mode: charge.mock ? "sandbox" : "live",
+      });
     }
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
@@ -365,15 +320,6 @@ export async function renewOrPaySubscription(
 
   revalidatePath("/settings/billing");
   revalidatePath("/admin/orgs");
-
-  if (verify.status === "PENDING_REVIEW") {
-    return {
-      ok: true,
-      pendingReview: true,
-      error:
-        "Payment submitted for review. Your plan stays active after an admin confirms the reference.",
-    };
-  }
 
   return { ok: true };
 }
