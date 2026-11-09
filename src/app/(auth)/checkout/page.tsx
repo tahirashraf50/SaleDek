@@ -7,7 +7,7 @@ import { CheckoutForm } from "@/components/checkout/checkout-form";
 import { db } from "@/lib/db";
 import { getWebsiteSettings } from "@/lib/platform-website";
 import { annualAmountFromMonthly } from "@/lib/saas-billing";
-import { formatDate, formatPlatformCurrency } from "@/lib/utils";
+import { formatDate } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
@@ -29,69 +29,42 @@ export default async function CheckoutPage({ searchParams }: Props) {
   const periodEnd = addYears(new Date(), 1);
 
   return (
-    <div className="site-hero-glow relative flex min-h-screen flex-col">
-      <header className="relative z-10 mx-auto flex w-full max-w-6xl items-center justify-between px-4 py-5 md:px-6">
-        <Link href="/" className="inline-flex items-center gap-2.5">
+    <div className="site-hero-glow relative flex min-h-[100dvh] flex-col">
+      <header className="relative z-10 mx-auto flex w-full max-w-lg items-center justify-between px-4 py-3">
+        <Link href="/" className="inline-flex items-center gap-2">
           {site.logoUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
               src={site.logoUrl}
               alt={site.brandName}
-              className="h-9 w-auto max-w-[160px] object-contain"
+              className="h-7 w-auto max-w-[120px] object-contain"
             />
           ) : (
-            <>
-              <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-[var(--site-purple)] text-sm font-bold text-white">
-                {site.brandName.slice(0, 1)}
-              </span>
-              <span className="text-lg font-semibold tracking-tight text-[var(--site-ink)]">
-                {site.brandName}
-              </span>
-            </>
+            <span className="text-sm font-semibold tracking-tight text-[var(--site-ink)]">
+              {site.brandName}
+            </span>
           )}
         </Link>
         <Link
           href="/pricing"
-          className="inline-flex items-center gap-1.5 text-sm font-medium text-[var(--site-muted)] transition hover:text-[var(--site-purple)]"
+          className="inline-flex items-center gap-1 text-xs font-medium text-[var(--site-muted)] transition hover:text-[var(--site-purple)]"
         >
-          <ArrowLeft className="h-4 w-4" />
-          Back to pricing
+          <ArrowLeft className="h-3.5 w-3.5" />
+          Pricing
         </Link>
       </header>
 
-      <main className="relative z-10 mx-auto grid w-full max-w-5xl flex-1 gap-8 px-4 py-10 md:grid-cols-[1fr_1.1fr] md:px-6 md:py-14">
-        <div className="site-anim-fade md:pt-6">
-          <span className="site-pill">Checkout</span>
-          <h1 className="mt-4 text-3xl font-semibold tracking-tight text-[var(--site-ink)] md:text-4xl">
-            Activate {plan.name}
-          </h1>
-          <p className="mt-3 max-w-md text-sm leading-relaxed text-[var(--site-muted)]">
-            Pay the annual subscription to unlock your workspace. Your plan stays
-            active until{" "}
-            <span className="font-medium text-[var(--site-ink)]">
-              {formatDate(periodEnd)}
-            </span>
-            — renew before then to keep uninterrupted access.
-          </p>
+      <main className="relative z-10 mx-auto flex w-full max-w-lg flex-1 flex-col justify-center px-4 pb-4 pt-1">
+        <div className="site-anim-fade rounded-2xl border border-[var(--site-line)] bg-white/95 p-5 shadow-[0_20px_50px_-30px_rgba(172,22,224,0.4)] backdrop-blur-sm sm:p-6">
+          <div className="mb-4">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--site-purple)]">
+              Checkout
+            </p>
+            <h1 className="mt-1 text-xl font-semibold tracking-tight text-[var(--site-ink)]">
+              Activate {plan.name}
+            </h1>
+          </div>
 
-          <ul className="mt-8 space-y-3 text-sm text-[var(--site-ink)]">
-            <li className="flex gap-2">
-              <span className="text-[var(--site-purple)]">✓</span>
-              Annual billing: {formatPlatformCurrency(annual)} (
-              {formatPlatformCurrency(monthly)}/mo × 12)
-            </li>
-            <li className="flex gap-2">
-              <span className="text-[var(--site-purple)]">✓</span>
-              Subscription expiry linked to this payment period
-            </li>
-            <li className="flex gap-2">
-              <span className="text-[var(--site-purple)]">✓</span>
-              Pay by credit card — plan activates instantly through expiry
-            </li>
-          </ul>
-        </div>
-
-        <div className="site-anim-fade rounded-[1.75rem] border border-[var(--site-line)] bg-white/90 p-7 shadow-[0_28px_60px_-36px_rgba(172,22,224,0.45)] backdrop-blur-sm md:p-8">
           <CheckoutForm
             planKey={plan.key}
             planName={plan.name}
