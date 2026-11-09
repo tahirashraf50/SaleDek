@@ -421,6 +421,13 @@ export default async function AdminHomePage() {
                 <ArrowUpRight className="h-3.5 w-3.5" />
               </Link>
               <Link
+                href="/admin/superusers"
+                className="inline-flex items-center justify-between rounded-xl bg-white/10 px-3 py-2.5 text-xs font-semibold text-white ring-1 ring-white/15 hover:bg-white/15"
+              >
+                Manage superusers
+                <ArrowUpRight className="h-3.5 w-3.5" />
+              </Link>
+              <Link
                 href="/admin/website"
                 className="inline-flex items-center justify-between rounded-xl bg-white/10 px-3 py-2.5 text-xs font-semibold text-white ring-1 ring-white/15 hover:bg-white/15"
               >

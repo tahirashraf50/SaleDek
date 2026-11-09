@@ -881,4 +881,140 @@ export async function clearWebsiteLogo() {
   revalidateWebsite();
 }
 
+function revalidateSuperUsers() {
+  revalidatePath("/admin/superusers");
+  revalidatePath("/admin");
+}
+
+async function getSuperAdminOrThrow(userId: string) {
+  const user = await db.user.findFirst({
+    where: { id: userId, role: "SUPER_ADMIN", organizationId: null },
+  });
+  if (!user) throw new Error("Superuser not found");
+  return user;
+}
+
+export async function createSuperAdmin(input: {
+  name: string;
+  email: string;
+  password: string;
+}) {
+  const session = await requireSuperAdmin();
+  const name = input.name.trim();
+  const email = input.email.trim().toLowerCase();
+  const password = input.password;
+
+  if (!name || !email || !email.includes("@")) {
+    throw new Error("Name and valid email are required");
+  }
+  if (password.length < 6) {
+    throw new Error("Password must be at least 6 characters");
+  }
+
+  const existing = await db.user.findUnique({ where: { email } });
+  if (existing) throw new Error("Email already registered");
+
+  const passwordHash = await bcrypt.hash(password, 10);
+  const user = await db.user.create({
+    data: {
+      name,
+      email,
+      passwordHash,
+      role: "SUPER_ADMIN",
+      organizationId: null,
+      active: true,
+    },
+  });
+
+  await writeAudit({
+    userId: session.user.id,
+    action: "admin.superuser.create",
+    entity: "User",
+    entityId: user.id,
+    meta: { email },
+  });
+
+  revalidateSuperUsers();
+  return { id: user.id, email: user.email, name: user.name };
+}
+
+export async function updateSuperAdmin(input: {
+  userId: string;
+  name: string;
+  email: string;
+  active: boolean;
+}) {
+  const session = await requireSuperAdmin();
+  const existing = await getSuperAdminOrThrow(input.userId);
+  const name = input.name.trim();
+  const email = input.email.trim().toLowerCase();
+
+  if (!name || !email || !email.includes("@")) {
+    throw new Error("Name and valid email are required");
+  }
+
+  if (existing.id === session.user.id && !input.active) {
+    throw new Error("You cannot deactivate your own account");
+  }
+
+  if (!input.active) {
+    const activeCount = await db.user.count({
+      where: { role: "SUPER_ADMIN", organizationId: null, active: true },
+    });
+    if (activeCount <= 1 && existing.active) {
+      throw new Error("Keep at least one active superuser");
+    }
+  }
+
+  if (email !== existing.email) {
+    const taken = await db.user.findUnique({ where: { email } });
+    if (taken) throw new Error("Email already registered");
+  }
+
+  const user = await db.user.update({
+    where: { id: existing.id },
+    data: { name, email, active: input.active },
+  });
+
+  await writeAudit({
+    userId: session.user.id,
+    action: "admin.superuser.update",
+    entity: "User",
+    entityId: user.id,
+    meta: { email: user.email, active: user.active },
+  });
+
+  revalidateSuperUsers();
+  return { id: user.id, email: user.email, name: user.name, active: user.active };
+}
+
+export async function resetSuperAdminPassword(input: {
+  userId: string;
+  password: string;
+}) {
+  const session = await requireSuperAdmin();
+  const existing = await getSuperAdminOrThrow(input.userId);
+
+  if (input.password.length < 6) {
+    throw new Error("Password must be at least 6 characters");
+  }
+
+  const passwordHash = await bcrypt.hash(input.password, 10);
+  await db.user.update({
+    where: { id: existing.id },
+    data: { passwordHash },
+  });
+
+  await writeAudit({
+    userId: session.user.id,
+    action: "admin.superuser.password_reset",
+    entity: "User",
+    entityId: existing.id,
+    meta: { email: existing.email },
+  });
+
+  revalidateSuperUsers();
+  return { id: existing.id };
+}
+
 export type { SaaSPlanKey, SubscriptionStatus };

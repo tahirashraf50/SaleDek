@@ -2,13 +2,20 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Building2, CreditCard, Globe, LayoutDashboard } from "lucide-react";
+import {
+  Building2,
+  CreditCard,
+  Globe,
+  LayoutDashboard,
+  Shield,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const links = [
   { href: "/admin", label: "Overview", icon: LayoutDashboard, exact: true },
   { href: "/admin/orgs", label: "Tenants", icon: Building2 },
   { href: "/admin/plans", label: "SaaS plans", icon: CreditCard },
+  { href: "/admin/superusers", label: "Superusers", icon: Shield },
   { href: "/admin/website", label: "Website", icon: Globe },
 ];
 
