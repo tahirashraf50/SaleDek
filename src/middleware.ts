@@ -37,6 +37,7 @@ export async function middleware(req: NextRequest) {
     path.startsWith("/api/setup-db") ||
     path.startsWith("/api/org-logo") ||
     path.startsWith("/api/platform-logo") ||
+    path.startsWith("/api/platform-favicon") ||
     path.startsWith("/api/webhooks/");
 
   if (!token && !isPublic) {

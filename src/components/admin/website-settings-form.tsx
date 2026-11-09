@@ -5,7 +5,9 @@ import { useRouter } from "next/navigation";
 import { ImagePlus, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import {
+  clearWebsiteFavicon,
   clearWebsiteLogo,
+  updateWebsiteFavicon,
   updateWebsiteLogo,
   updateWebsiteSettings,
 } from "@/server/actions/admin";
@@ -25,6 +27,7 @@ type HeroStat = { value: string; label: string };
 type Settings = {
   brandName: string;
   logoUrl: string | null;
+  faviconUrl: string | null;
   heroBadge: string;
   heroHeadline: string;
   heroSubtext: string;
@@ -65,8 +68,10 @@ function linesToList(text: string) {
 export function WebsiteSettingsForm({ initial }: { initial: Settings }) {
   const router = useRouter();
   const fileRef = useRef<HTMLInputElement>(null);
+  const faviconRef = useRef<HTMLInputElement>(null);
   const [pending, start] = useTransition();
   const [preview, setPreview] = useState<string | null>(null);
+  const [faviconPreview, setFaviconPreview] = useState<string | null>(null);
   const [form, setForm] = useState(initial);
   const [bulletsText, setBulletsText] = useState(initial.analysisBullets.join("\n"));
   const [integrationsText, setIntegrationsText] = useState(
@@ -114,6 +119,11 @@ export function WebsiteSettingsForm({ initial }: { initial: Settings }) {
     setPreview(file ? URL.createObjectURL(file) : null);
   }
 
+  function onFaviconFile(file: File | null) {
+    if (faviconPreview) URL.revokeObjectURL(faviconPreview);
+    setFaviconPreview(file ? URL.createObjectURL(file) : null);
+  }
+
   function saveLogo() {
     const file = fileRef.current?.files?.[0];
     if (!file) {
@@ -143,6 +153,44 @@ export function WebsiteSettingsForm({ initial }: { initial: Settings }) {
       try {
         await clearWebsiteLogo();
         toast.success("Logo removed");
+        set("logoUrl", null);
+        router.refresh();
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : "Failed");
+      }
+    });
+  }
+
+  function saveFavicon() {
+    const file = faviconRef.current?.files?.[0];
+    if (!file) {
+      toast.error("Choose a favicon image");
+      return;
+    }
+    start(async () => {
+      try {
+        await updateWebsiteFavicon(file);
+        toast.success("Website favicon updated");
+        if (faviconRef.current) faviconRef.current.value = "";
+        if (faviconPreview) URL.revokeObjectURL(faviconPreview);
+        setFaviconPreview(null);
+        set(
+          "faviconUrl",
+          `/api/platform-favicon?v=${encodeURIComponent(new Date().toISOString())}`,
+        );
+        router.refresh();
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : "Upload failed");
+      }
+    });
+  }
+
+  function removeFavicon() {
+    start(async () => {
+      try {
+        await clearWebsiteFavicon();
+        toast.success("Favicon removed");
+        set("faviconUrl", null);
         router.refresh();
       } catch (err) {
         toast.error(err instanceof Error ? err.message : "Failed");
@@ -194,6 +242,7 @@ export function WebsiteSettingsForm({ initial }: { initial: Settings }) {
   }
 
   const logoSrc = preview || form.logoUrl;
+  const faviconSrc = faviconPreview || form.faviconUrl;
 
   return (
     <div className="space-y-5">
@@ -260,6 +309,61 @@ export function WebsiteSettingsForm({ initial }: { initial: Settings }) {
                     Remove
                   </Button>
                 ) : null}
+              </div>
+            </div>
+          </div>
+
+          <div className="border-t border-slate-100 pt-4">
+            <Label>Website favicon</Label>
+            <p className="mt-0.5 text-[11px] text-slate-500">
+              Browser tab icon for the public site / portal (PNG, ICO, SVG — max 512KB)
+            </p>
+            <div className="mt-3 flex flex-wrap items-center gap-4">
+              <div className="flex h-14 w-14 items-center justify-center overflow-hidden rounded-xl border border-slate-200 bg-slate-50">
+                {faviconSrc ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={faviconSrc}
+                    alt="Favicon"
+                    className="h-8 w-8 object-contain"
+                  />
+                ) : (
+                  <ImagePlus className="h-5 w-5 text-slate-400" />
+                )}
+              </div>
+              <div className="min-w-0 flex-1 space-y-2">
+                <Input
+                  ref={faviconRef}
+                  type="file"
+                  accept="image/png,image/x-icon,image/vnd.microsoft.icon,.ico,image/jpeg,image/webp,image/svg+xml,image/gif"
+                  disabled={pending}
+                  onChange={(e) => onFaviconFile(e.target.files?.[0] || null)}
+                  className="max-w-md text-xs"
+                />
+                <div className="flex flex-wrap gap-2">
+                  <Button
+                    type="button"
+                    size="sm"
+                    className="h-8 bg-teal-700 text-white hover:bg-teal-800"
+                    disabled={pending}
+                    onClick={saveFavicon}
+                  >
+                    Upload favicon
+                  </Button>
+                  {form.faviconUrl ? (
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      className="h-8 gap-1 text-rose-700"
+                      disabled={pending}
+                      onClick={removeFavicon}
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                      Remove
+                    </Button>
+                  ) : null}
+                </div>
               </div>
             </div>
           </div>

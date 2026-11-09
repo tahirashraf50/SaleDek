@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { Providers } from "@/components/providers";
+import { getWebsiteSettings } from "@/lib/platform-website";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -13,10 +14,21 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-export const metadata: Metadata = {
-  title: "SaleDek — CRM & Sales",
-  description: "Omnichannel CRM for complaints, sales, and customer success",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const site = await getWebsiteSettings();
+  return {
+    title: `${site.brandName} — CRM & Sales`,
+    description: "Omnichannel CRM for complaints, sales, and customer success",
+    icons: site.faviconUrl
+      ? {
+          icon: [{ url: site.faviconUrl }],
+          shortcut: [site.faviconUrl],
+          apple: [{ url: site.faviconUrl }],
+        }
+      : { icon: "/favicon.ico" },
+  };
+}
+
 export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {

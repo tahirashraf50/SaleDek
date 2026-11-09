@@ -20,7 +20,7 @@ export default async function AdminWebsiteSettingsPage() {
             Website settings
           </h1>
           <p className="mt-1 text-sm text-slate-500">
-            Logo, hero, sections, SEO, contact & footer for{" "}
+            Logo, favicon, hero, sections, SEO, contact & footer for{" "}
             <span className="font-medium text-slate-700">saledek.com</span>
           </p>
         </div>
@@ -38,6 +38,7 @@ export default async function AdminWebsiteSettingsPage() {
         initial={{
           brandName: settings.brandName,
           logoUrl: settings.logoUrl,
+          faviconUrl: settings.faviconUrl,
           heroBadge: settings.heroBadge,
           heroHeadline: settings.heroHeadline,
           heroSubtext: settings.heroSubtext,

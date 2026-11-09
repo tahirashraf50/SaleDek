@@ -1100,6 +1100,10 @@ model PlatformWebsiteSettings {
   /// Base64 logo bytes (persists on Hostinger without local disk)
   logoData            String?  @db.LongText
   logoMime            String?
+  faviconPath         String?
+  /// Base64 favicon bytes (persists on Hostinger without local disk)
+  faviconData         String?  @db.LongText
+  faviconMime         String?
   heroBadge           String   @default("CRM & SaaS")
   heroHeadline        String   @default("Omnichannel complaints and sales in one workspace.")
   heroSubtext         String   @default("WhatsApp-style inbox, tickets, payments, shop, and portal — multi-tenant SaaS for every company you onboard.")

@@ -17,6 +17,7 @@ export {
 } from "@/lib/website-seo";
 
 export const PLATFORM_LOGO_PUBLIC_URL = "/api/platform-logo";
+export const PLATFORM_FAVICON_PUBLIC_URL = "/api/platform-favicon";
 
 export type HeroStat = { value: string; label: string };
 
@@ -24,6 +25,8 @@ export type WebsiteSettings = {
   brandName: string;
   logoUrl: string | null;
   logoPath: string | null;
+  faviconUrl: string | null;
+  faviconPath: string | null;
   heroBadge: string;
   heroHeadline: string;
   heroSubtext: string;
@@ -111,6 +114,8 @@ const FALLBACK: WebsiteSettings = {
   brandName: "SaleDek",
   logoUrl: null,
   logoPath: null,
+  faviconUrl: null,
+  faviconPath: null,
   heroBadge: "CRM & SaaS",
   heroHeadline: "Everything You Need to Grow Your Sales",
   heroSubtext:
@@ -153,6 +158,7 @@ const FALLBACK: WebsiteSettings = {
 function mapRow(row: {
   brandName: string;
   logoPath: string | null;
+  faviconPath?: string | null;
   heroBadge: string;
   heroHeadline: string;
   heroSubtext: string;
@@ -182,6 +188,7 @@ function mapRow(row: {
   footerNote: string;
   copyrightName: string;
   logoData?: string | null;
+  faviconData?: string | null;
   seoPages?: unknown;
   updatedAt: Date;
 }): WebsiteSettings {
@@ -192,12 +199,16 @@ function mapRow(row: {
       ? "SaleDek"
       : row.copyrightName;
   const hasLogo = Boolean(row.logoData || row.logoPath);
+  const hasFavicon = Boolean(row.faviconData || row.faviconPath);
+  const cacheBust = encodeURIComponent(row.updatedAt.toISOString());
   const scrub = (s: string) => s.replaceAll("PulseCRM", "SaleDek");
   return {
     brandName,
     logoPath: row.logoPath,
-    logoUrl: hasLogo
-      ? `${PLATFORM_LOGO_PUBLIC_URL}?v=${encodeURIComponent(row.updatedAt.toISOString())}`
+    logoUrl: hasLogo ? `${PLATFORM_LOGO_PUBLIC_URL}?v=${cacheBust}` : null,
+    faviconPath: row.faviconPath ?? null,
+    faviconUrl: hasFavicon
+      ? `${PLATFORM_FAVICON_PUBLIC_URL}?v=${cacheBust}`
       : null,
     heroBadge: scrub(row.heroBadge),
     heroHeadline: scrub(row.heroHeadline),
@@ -236,6 +247,9 @@ async function ensureWebsiteColumns() {
     "ALTER TABLE `PlatformWebsiteSettings` ADD COLUMN `seoPages` JSON NOT NULL DEFAULT ('{}')",
     "ALTER TABLE `PlatformWebsiteSettings` ADD COLUMN `logoData` LONGTEXT NULL",
     "ALTER TABLE `PlatformWebsiteSettings` ADD COLUMN `logoMime` VARCHAR(191) NULL",
+    "ALTER TABLE `PlatformWebsiteSettings` ADD COLUMN `faviconPath` VARCHAR(191) NULL",
+    "ALTER TABLE `PlatformWebsiteSettings` ADD COLUMN `faviconData` LONGTEXT NULL",
+    "ALTER TABLE `PlatformWebsiteSettings` ADD COLUMN `faviconMime` VARCHAR(191) NULL",
   ];
   for (const sql of alters) {
     try {
@@ -275,7 +289,11 @@ export async function getWebsiteSettings(): Promise<WebsiteSettings> {
     return mapRow(row);
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
-    if (/seoPages|logoData|logoMime|Unknown column/i.test(message)) {
+    if (
+      /seoPages|logoData|logoMime|faviconPath|faviconData|faviconMime|Unknown column/i.test(
+        message,
+      )
+    ) {
       await ensureWebsiteColumns();
       try {
         const row = await db.platformWebsiteSettings.upsert({
@@ -305,6 +323,13 @@ export async function buildMarketingMetadata(page: SeoPageKey): Promise<Metadata
     title: seo.title,
     description: seo.description,
     keywords: keywords.length ? keywords : undefined,
+    icons: site.faviconUrl
+      ? {
+          icon: [{ url: site.faviconUrl }],
+          shortcut: [site.faviconUrl],
+          apple: [{ url: site.faviconUrl }],
+        }
+      : undefined,
     openGraph: {
       title: seo.title,
       description: seo.description,

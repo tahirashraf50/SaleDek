@@ -881,6 +881,89 @@ export async function clearWebsiteLogo() {
   revalidateWebsite();
 }
 
+async function ensureFaviconColumns() {
+  for (const sql of [
+    "ALTER TABLE `PlatformWebsiteSettings` ADD COLUMN `faviconPath` VARCHAR(191) NULL",
+    "ALTER TABLE `PlatformWebsiteSettings` ADD COLUMN `faviconData` LONGTEXT NULL",
+    "ALTER TABLE `PlatformWebsiteSettings` ADD COLUMN `faviconMime` VARCHAR(191) NULL",
+  ]) {
+    try {
+      await db.$executeRawUnsafe(sql);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      if (!/Duplicate column|already exists/i.test(message)) {
+        /* ignore */
+      }
+    }
+  }
+}
+
+export async function updateWebsiteFavicon(favicon: File) {
+  await requireSuperAdmin();
+  const { storePlatformFavicon } = await import("@/lib/platform-logo-server");
+  const stored = await storePlatformFavicon(favicon);
+  const data = {
+    faviconPath: stored.faviconPath,
+    faviconData: stored.faviconData,
+    faviconMime: stored.faviconMime,
+  };
+  try {
+    await db.platformWebsiteSettings.upsert({
+      where: { id: "default" },
+      create: { id: "default", ...data },
+      update: data,
+    });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    if (/faviconPath|faviconData|faviconMime|Unknown column/i.test(message)) {
+      await ensureFaviconColumns();
+      await db.platformWebsiteSettings.upsert({
+        where: { id: "default" },
+        create: { id: "default", ...data },
+        update: data,
+      });
+    } else {
+      throw err;
+    }
+  }
+  revalidateWebsite();
+  return { faviconPath: stored.faviconPath };
+}
+
+export async function clearWebsiteFavicon() {
+  await requireSuperAdmin();
+  try {
+    await db.platformWebsiteSettings.upsert({
+      where: { id: "default" },
+      create: {
+        id: "default",
+        faviconPath: null,
+        faviconData: null,
+        faviconMime: null,
+      },
+      update: { faviconPath: null, faviconData: null, faviconMime: null },
+    });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    if (/faviconPath|faviconData|faviconMime|Unknown column/i.test(message)) {
+      await ensureFaviconColumns();
+      await db.platformWebsiteSettings.upsert({
+        where: { id: "default" },
+        create: {
+          id: "default",
+          faviconPath: null,
+          faviconData: null,
+          faviconMime: null,
+        },
+        update: { faviconPath: null, faviconData: null, faviconMime: null },
+      });
+    } else {
+      throw err;
+    }
+  }
+  revalidateWebsite();
+}
+
 function revalidateSuperUsers() {
   revalidatePath("/admin/superusers");
   revalidatePath("/admin");
