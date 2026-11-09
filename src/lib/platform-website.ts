@@ -325,9 +325,12 @@ export async function buildMarketingMetadata(page: SeoPageKey): Promise<Metadata
     keywords: keywords.length ? keywords : undefined,
     icons: site.faviconUrl
       ? {
-          icon: [{ url: site.faviconUrl }],
-          shortcut: [site.faviconUrl],
-          apple: [{ url: site.faviconUrl }],
+          icon: [
+            { url: site.faviconUrl, type: "image/png" },
+            { url: site.faviconUrl },
+          ],
+          shortcut: site.faviconUrl,
+          apple: site.faviconUrl,
         }
       : undefined,
     openGraph: {

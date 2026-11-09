@@ -12,6 +12,12 @@ const nextConfig: NextConfig = {
       { source: "/site/contact", destination: "/contact", permanent: true },
     ];
   },
+  // Browsers always request /favicon.ico — serve the admin-uploaded portal icon.
+  async rewrites() {
+    return [
+      { source: "/favicon.ico", destination: "/api/platform-favicon" },
+    ];
+  },
   // Hide the bottom-left "N" Next.js Dev Tools badge (dev only)
   devIndicators: false,
   // Hostinger production build: unblock deploy while we tighten types

@@ -21,11 +21,14 @@ export async function generateMetadata(): Promise<Metadata> {
     description: "Omnichannel CRM for complaints, sales, and customer success",
     icons: site.faviconUrl
       ? {
-          icon: [{ url: site.faviconUrl }],
-          shortcut: [site.faviconUrl],
-          apple: [{ url: site.faviconUrl }],
+          icon: [
+            { url: site.faviconUrl, type: "image/png" },
+            { url: site.faviconUrl },
+          ],
+          shortcut: site.faviconUrl,
+          apple: site.faviconUrl,
         }
-      : { icon: "/favicon.ico" },
+      : undefined,
   };
 }
 

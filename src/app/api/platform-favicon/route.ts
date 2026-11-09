@@ -29,7 +29,7 @@ export async function GET() {
         return new NextResponse(buf, {
           headers: {
             "Content-Type": settings.faviconMime || "image/png",
-            "Cache-Control": "public, max-age=3600",
+            "Cache-Control": "public, max-age=0, must-revalidate",
           },
         });
       } catch {
@@ -48,7 +48,7 @@ export async function GET() {
       return new NextResponse(data, {
         headers: {
           "Content-Type": MIME[ext] || "image/png",
-          "Cache-Control": "public, max-age=3600",
+          "Cache-Control": "public, max-age=0, must-revalidate",
         },
       });
     } catch {

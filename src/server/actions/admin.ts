@@ -687,6 +687,10 @@ function revalidateWebsite() {
   revalidatePath("/features");
   revalidatePath("/about");
   revalidatePath("/contact");
+  revalidatePath("/login");
+  revalidatePath("/api/platform-favicon");
+  revalidatePath("/api/platform-logo");
+  revalidatePath("/favicon.ico");
 }
 
 export async function updateWebsiteSettings(data: {
